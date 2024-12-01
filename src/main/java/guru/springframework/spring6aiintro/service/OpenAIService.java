@@ -13,4 +13,6 @@ public interface OpenAIService {
     Answer getCapital(GetCapitalRequest getCapitalRequest);
 
     Answer getCapitalWithInfo(GetCapitalRequest getCapitalRequest);
+
+    Answer getCapitalAsJson(GetCapitalRequest getCapitalRequest);
 }

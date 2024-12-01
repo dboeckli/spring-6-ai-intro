@@ -25,6 +25,11 @@ public class QuestionController {
         return this.openAIService.getCapital(getCapitalRequest);
     }
 
+    @PostMapping("/capitalResponseInJson")
+    public Answer getCapitalInJson(@RequestBody GetCapitalRequest getCapitalRequest) {
+        return this.openAIService.getCapitalAsJson(getCapitalRequest);
+    }
+
     @PostMapping("/capitalWithInfo")
     public Answer getCapitalWithInfo(@RequestBody GetCapitalRequest getCapitalRequest) {
         return this.openAIService.getCapitalWithInfo(getCapitalRequest);
