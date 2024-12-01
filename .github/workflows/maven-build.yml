@@ -89,6 +89,7 @@ jobs:
       - name: Run Maven Build
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           BRANCH_MVN_VERSION: ${{needs.setup.outputs.BRANCH_MVN_VERSION}}
           BRANCH_NAME: ${{needs.setup.outputs.BRANCH_NAME}}
         run: |
