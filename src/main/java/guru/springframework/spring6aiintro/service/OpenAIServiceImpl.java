@@ -87,6 +87,7 @@ public class OpenAIServiceImpl implements OpenAIService {
             responseString = jsonNode.get("answer").asText();
 
         } catch (JsonProcessingException ex) {
+            log.error("Error parsing JSON response: {}", ex.getMessage());
             throw new RuntimeException(ex);
         }
         return new Answer(responseString);
