@@ -15,3 +15,12 @@ Content-Type: application/json
 {
     "countryName": "Switzerland"
 }
+
+###
+POST http://localhost:8080/capitalWithInfo
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
