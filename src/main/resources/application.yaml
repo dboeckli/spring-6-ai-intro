@@ -5,6 +5,9 @@ spring:
   ai:
     openai:
       #Pass API key as environment variable, e.g. -DOPENAI_API_KEY=your-api-key
+      # for github action we added a secret there for that purpose
       api-key: ${OPENAI_API_KEY}
       chat:
         api-key: ${OPENAI_API_KEY}
+        options:
+          model: gpt-4o
