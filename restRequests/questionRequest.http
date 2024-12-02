@@ -1,0 +1,55 @@
+###
+POST http://localhost:8080/ask
+Accept: application/json
+Content-Type: application/json
+
+{
+    "question": "Who was the first person to climb Mount Everest?"
+}
+
+###
+POST http://localhost:8080/capital
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
+
+###
+POST http://localhost:8080/capitalResponseInJson
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
+
+###
+POST http://localhost:8080/capitalResponseInJsonWithParser
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
+
+###
+POST http://localhost:8080/capitalWithInfo
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
+
+###
+POST http://localhost:8080/capitalWithInfWithParser
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
+
+
