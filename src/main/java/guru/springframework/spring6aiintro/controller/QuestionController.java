@@ -1,9 +1,6 @@
 package guru.springframework.spring6aiintro.controller;
 
-import guru.springframework.spring6aiintro.dto.Answer;
-import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
-import guru.springframework.spring6aiintro.dto.GetCapitalResponse;
-import guru.springframework.spring6aiintro.dto.Question;
+import guru.springframework.spring6aiintro.dto.*;
 import guru.springframework.spring6aiintro.service.OpenAIService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +36,11 @@ public class QuestionController {
     @PostMapping("/capitalWithInfo")
     public Answer getCapitalWithInfo(@RequestBody GetCapitalRequest getCapitalRequest) {
         return this.openAIService.getCapitalWithInfo(getCapitalRequest);
+    }
+
+    @PostMapping("/capitalWithInfWithParser")
+    public GetCapitalDetailsResponse getCapitalWithInfoWithParser(@RequestBody GetCapitalRequest getCapitalRequest) {
+        return this.openAIService.getCapitalWithInfoWithParser(getCapitalRequest);
     }
     
     

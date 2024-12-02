@@ -3,10 +3,7 @@ package guru.springframework.spring6aiintro.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import guru.springframework.spring6aiintro.dto.Answer;
-import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
-import guru.springframework.spring6aiintro.dto.GetCapitalResponse;
-import guru.springframework.spring6aiintro.dto.Question;
+import guru.springframework.spring6aiintro.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -39,6 +36,9 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     @Value("classpath:templates/get-capital-prompt-with-parser.st")
     private Resource getCapitalWithParser;
+
+    @Value("classpath:templates/get-capital-with-info-with-parser.st")
+    private Resource getCapitalDetailsWithParser;
 
     public OpenAIServiceImpl(ChatModel chatModel, ObjectMapper objectMapper) {
         this.chatModel = chatModel;
@@ -77,6 +77,20 @@ public class OpenAIServiceImpl implements OpenAIService {
         ChatResponse response = chatModel.call(prompt);
 
         return new Answer(response.getResult().getOutput().getContent());
+    }
+
+    @Override
+    public GetCapitalDetailsResponse getCapitalWithInfoWithParser(GetCapitalRequest getCapitalRequest) {
+        BeanOutputConverter<GetCapitalDetailsResponse> converter = new BeanOutputConverter<>(GetCapitalDetailsResponse.class);
+        String format = converter.getFormat();
+
+        log.info("Json Format: " + format);
+
+        PromptTemplate promptTemplate = new PromptTemplate(getCapitalDetailsWithParser);
+        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName(), "format", format));
+
+        ChatResponse response = chatModel.call(prompt);
+        return converter.convert(response.getResult().getOutput().getContent());
     }
 
     @Override

@@ -1,9 +1,6 @@
 package guru.springframework.spring6aiintro.service;
 
-import guru.springframework.spring6aiintro.dto.Answer;
-import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
-import guru.springframework.spring6aiintro.dto.GetCapitalResponse;
-import guru.springframework.spring6aiintro.dto.Question;
+import guru.springframework.spring6aiintro.dto.*;
 
 public interface OpenAIService {
 
@@ -18,5 +15,7 @@ public interface OpenAIService {
     Answer getCapitalAsJson(GetCapitalRequest getCapitalRequest);
 
     Answer getCapitalWithInfo(GetCapitalRequest getCapitalRequest);
+
+    GetCapitalDetailsResponse getCapitalWithInfoWithParser(GetCapitalRequest getCapitalRequest);
 
 }

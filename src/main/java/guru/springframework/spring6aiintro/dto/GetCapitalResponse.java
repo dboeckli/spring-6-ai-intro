@@ -1,4 +1,6 @@
 package guru.springframework.spring6aiintro.dto;
 
-public record GetCapitalResponse(String answer) {
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
+public record GetCapitalResponse(@JsonPropertyDescription("This is the city name") String answer) {
 }

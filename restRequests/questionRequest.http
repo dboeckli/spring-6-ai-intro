@@ -17,15 +17,6 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:8080/capitalWithInfo
-Accept: application/json
-Content-Type: application/json
-
-{
-    "countryName": "Switzerland"
-}
-
-###
 POST http://localhost:8080/capitalResponseInJson
 Accept: application/json
 Content-Type: application/json
@@ -42,3 +33,23 @@ Content-Type: application/json
 {
     "countryName": "Switzerland"
 }
+
+###
+POST http://localhost:8080/capitalWithInfo
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
+
+###
+POST http://localhost:8080/capitalWithInfWithParser
+Accept: application/json
+Content-Type: application/json
+
+{
+    "countryName": "Switzerland"
+}
+
+

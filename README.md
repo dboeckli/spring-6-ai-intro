@@ -1,6 +1,8 @@
 # Introduction to Spring AI
 
-This repository contains source code examples used to support my on-line courses about the Spring Framework.
+This repository contains source code examples for Spring AI.
+
+Application runs on port 8080
 
 * https://platform.openai.com/settings/organization/billing/overview
 * https://platform.openai.com/settings/organization/api-keys
