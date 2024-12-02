@@ -4,6 +4,10 @@ This repository contains source code examples used to support my on-line courses
 
 * https://platform.openai.com/settings/organization/billing/overview
 * https://platform.openai.com/settings/organization/api-keys
+The Openai key (OPENAI_API_KEY) has been placed as environment variable in:
+* Junit
+* Maven
+* Spring Boot Runner: DO NOT PLACE THE RUNNER ONE UNDER SOURCE CONTROL
 
 ## All Spring Framework Guru Courses
 ### Spring Framework 6

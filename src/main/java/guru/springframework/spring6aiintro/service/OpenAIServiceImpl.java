@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6aiintro.dto.Answer;
 import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
+import guru.springframework.spring6aiintro.dto.GetCapitalResponse;
 import guru.springframework.spring6aiintro.dto.Question;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,9 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     @Value("classpath:templates/get-capital-with-info.st")
     private Resource getCapitalPromptWithInfo;
+
+    @Value("classpath:templates/get-capital-prompt-with-parser.st")
+    private Resource getCapitalWithParser;
 
     public OpenAIServiceImpl(ChatModel chatModel, ObjectMapper objectMapper) {
         this.chatModel = chatModel;
@@ -91,5 +96,20 @@ public class OpenAIServiceImpl implements OpenAIService {
             throw new RuntimeException(ex);
         }
         return new Answer(responseString);
+    }
+
+
+    @Override
+    public GetCapitalResponse getCapitalUseParserForResponse(GetCapitalRequest getCapitalRequest) {
+        BeanOutputConverter<GetCapitalResponse> converter = new BeanOutputConverter<>(GetCapitalResponse.class);
+        String format = converter.getFormat();
+        
+        log.info("Json Format: " + format);
+        
+        PromptTemplate promptTemplate = new PromptTemplate(getCapitalWithParser);
+        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName(), "format", format));
+
+        ChatResponse response = chatModel.call(prompt);
+        return converter.convert(response.getResult().getOutput().getContent());
     }
 }

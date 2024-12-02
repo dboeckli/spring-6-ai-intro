@@ -2,6 +2,7 @@ package guru.springframework.spring6aiintro.controller;
 
 import guru.springframework.spring6aiintro.dto.Answer;
 import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
+import guru.springframework.spring6aiintro.dto.GetCapitalResponse;
 import guru.springframework.spring6aiintro.dto.Question;
 import guru.springframework.spring6aiintro.service.OpenAIService;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,11 @@ public class QuestionController {
     @PostMapping("/capitalResponseInJson")
     public Answer getCapitalInJson(@RequestBody GetCapitalRequest getCapitalRequest) {
         return this.openAIService.getCapitalAsJson(getCapitalRequest);
+    }
+
+    @PostMapping("/capitalResponseInJsonWithParser")
+    public GetCapitalResponse getCapitalInJsonWithParser(@RequestBody GetCapitalRequest getCapitalRequest) {
+        return this.openAIService.getCapitalUseParserForResponse(getCapitalRequest);
     }
 
     @PostMapping("/capitalWithInfo")
