@@ -12,27 +12,35 @@
     <groupId>guru.springframework</groupId>
     <artifactId>spring-6-ai-intro</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    
-    <name>spring-6-ai-intro</name>
+
+    <name>${project.artifactId}</name>
     <description>spring-6-ai-intro</description>
-    
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
+
     <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
+        <connection>scm:git:https://github.com/${organization.name}/${project.artifactId}.git</connection>
+        <developerConnection>scm:git:https://github.com/${organization.name}/${project.artifactId}.git</developerConnection>
+        <url>https://github.com/${organization.name}/${project.artifactId}.git</url>
+        <tag>HEAD</tag>
     </scm>
     
     <properties>
         <java.version>21</java.version>
         <spring-ai.version>1.0.0-M4</spring-ai.version>
+
+        <organization.name>dboeckli</organization.name>
+
+        <github.acions.build>false</github.acions.build>
+        <skip.docker.publish>true</skip.docker.publish>
+
+        <!-- Sonar -->
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.language>java</sonar.language>
+        <jacoco.version>0.8.12</jacoco.version>
+
+        <git-commit-id-maven-plugin.version>9.0.1</git-commit-id-maven-plugin.version>
+        <!--suppress UnresolvedMavenProperty -->
+        <buildNumber>${git.commit.id.abbrev}</buildNumber>
     </properties>
 
     <profiles>
@@ -52,7 +60,23 @@
                 </repository>
             </repositories>
         </profile>
+
+        <!-- CI/CD profile for GitHub Actions -->
+        <profile>
+            <id>ci-cd</id>
+            <activation>
+                <property>
+                    <name>env.GITHUB_ACTIONS</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <github.acions.build>true</github.acions.build>
+                <skip.docker.publish>false</skip.docker.publish>
+            </properties>
+        </profile>
     </profiles>
+    
     <distributionManagement>
         <repository>
             <id>github</id>
@@ -96,6 +120,38 @@
     </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                <addClasspath>true</addClasspath>
+                                <classpathPrefix>lib/</classpathPrefix>
+                                <!-- Force the use of '-SNAPSHOT' version naming -->
+                                <useUniqueVersions>false</useUniqueVersions>
+                            </manifest>
+                            <manifestEntries>
+                                <Implementation-Title>${project.name}</Implementation-Title>
+                                <groupId>${project.groupId}</groupId>
+                                <artifactId>${project.artifactId}</artifactId>
+                                <Implementation-Version>${project.version}</Implementation-Version>
+                                <git-SHA-1>${buildNumber}</git-SHA-1>
+                                <source-url>${project.scm.url}</source-url>
+                                <BuildDate>${maven.build.timestamp}</BuildDate>
+                                <Built-By>${user.name}</Built-By>
+                                <Build-Jdk>${java.version}</Build-Jdk>
+                                <packaging>${project.packaging}</packaging>
+                            </manifestEntries>
+                        </archive>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -120,12 +176,132 @@
                                 <mavenUser>${user.name}</mavenUser>
                                 <javaVersion>${java.version}</javaVersion>
                                 <javaVendor>${java.vendor}</javaVendor>
-                                <!--<commit-id>${buildNumber}</commit-id>-->
+                                <commit-id>${buildNumber}</commit-id>
                                 <!--<docker-repository>${docker.push.repository}/${docker.image.prefix}/${project.artifactId}</docker-repository>-->
                             </additionalProperties>
                         </configuration>
                     </execution>
+
+                    <execution>
+                        <id>build-docker-image</id>
+                        <goals>
+                            <goal>build-image-no-fork</goal>
+                        </goals>
+                    </execution>
+
+                    <execution>
+                        <id>publish-docker-image-to-github</id>
+                        <goals>
+                            <goal>build-image-no-fork</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                        <configuration>
+                            <skip>${skip.docker.publish}</skip>
+                            <image>
+                                <name>ghcr.io/${organization.name}/${project.artifactId}:${project.version}</name>
+                                <publish>true</publish>
+                            </image>
+                            <docker>
+                                <publishRegistry>
+                                    <!-- GITHUB_ACTOR and GITHUB_TOKEN are set by gitHub Actions -->
+                                    <username>${env.GITHUB_ACTOR}</username>
+                                    <password>${env.GITHUB_TOKEN}</password>
+                                    <url>https://ghcr.io</url><!-- gitHub packages -->
+                                </publishRegistry>
+                            </docker>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>publish-docker-image-to-docker-hub</id>
+                        <goals>
+                            <goal>build-image-no-fork</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                        <configuration>
+                            <skip>${skip.docker.publish}</skip>
+                            <image>
+                                <name>${env.DOCKER_USER}/${project.artifactId}:${project.version}</name>
+                                <publish>true</publish>
+                            </image>
+                            <docker>
+                                <publishRegistry>
+                                    <!-- DOCKER_USER and DOCKER_TOKEN are set by gitHub Actions -->
+                                    <username>${env.DOCKER_USER}</username>
+                                    <password>${env.DOCKER_TOKEN}</password>
+                                    <url>https://index.docker.io/v1/</url>
+                                </publishRegistry>
+                            </docker>
+                        </configuration>
+                    </execution>
+
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <append>true</append>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>jacoco-create-report</id>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/jacoco-reports</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+            this plugin generates some git properties. We use the "git.commit.id.abbrev" variable which we append
+            to the docker image id for builds in jenkins (docker.application.image.tag). See "jenkins" profile at the top.
+            -->
+            <plugin>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
+                <version>${git-commit-id-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>get-the-git-infos</id>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <verbose>true</verbose>
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                    <commitIdGenerationMode>full</commitIdGenerationMode>
+                    <runOnlyOnce>true</runOnlyOnce>
+                    <skipPoms>false</skipPoms>
+                </configuration>
             </plugin>
 
             <plugin>
