@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.0</version>
+        <version>3.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     
@@ -29,8 +29,15 @@
 
         <organization.name>dboeckli</organization.name>
 
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+
         <github.acions.build>false</github.acions.build>
         <skip.docker.publish>true</skip.docker.publish>
+
+        <logbook.version>3.10.0</logbook.version>
+        <logstash-logback.version>8.0</logstash-logback.version>
 
         <!-- Sonar -->
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
@@ -43,24 +50,34 @@
         <buildNumber>${git.commit.id.abbrev}</buildNumber>
     </properties>
 
-    <profiles>
-        <profile>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <!--
+            you need a personal access token for the dboeckli organization: generate access token on github: https://github.com/settings/apps
+            add gitHub server configuration to settings.xml file with username and password (add token there)
+            Configure maven settings of IntelliJ to use your personal settings.xml
+            -->
             <id>github</id>
-            <repositories>
-                <repository>
-                    <id>central</id>
-                    <url>https://repo1.maven.org/maven2</url>
-                </repository>
-                <repository>
-                    <id>github</id>
-                    <url>https://maven.pkg.github.com/dboeckli/${project.artifactId}</url>
-                    <snapshots>
-                        <enabled>true</enabled>
-                    </snapshots>
-                </repository>
-            </repositories>
-        </profile>
+            <url>https://maven.pkg.github.com/${organization.name}/${project.artifactId}</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
+    <profiles>
         <!-- CI/CD profile for GitHub Actions -->
         <profile>
             <id>ci-cd</id>
@@ -81,9 +98,21 @@
         <repository>
             <id>github</id>
             <name>GitHub dboeckli Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/dboeckli/${project.artifactId}</url>
+            <url>https://maven.pkg.github.com/${organization.name}/${project.artifactId}</url>
         </repository>
     </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
     <dependencies>
         <dependency>
@@ -93,6 +122,27 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.zalando</groupId>
+            <artifactId>logbook-spring-boot-starter</artifactId>
+            <version>${logbook.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.zalando</groupId>
+            <artifactId>logbook-logstash</artifactId>
+            <version>${logbook.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash-logback.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <dependency>
@@ -107,17 +157,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.ai</groupId>
-                <artifactId>spring-ai-bom</artifactId>
-                <version>${spring-ai.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <pluginManagement>
@@ -153,18 +192,29 @@
         </pluginManagement>
 
         <plugins>
+            <!-- we need a port to be able to start the local profile -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>reserve-tomcat-port</id>
+                        <goals>
+                            <goal>reserve-network-port</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <portNames>
+                                <portName>tomcat.http.port</portName>
+                            </portNames>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <jvmArguments>-Dspring.application.admin.enabled=true</jvmArguments>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
                 <executions>
                     <execution>
                         <id>add-build-infos</id>
@@ -183,10 +233,38 @@
                     </execution>
 
                     <execution>
+                        <id>start-springboot-app</id>
+                        <goals>
+                            <goal>start</goal>
+                            <goal>stop</goal>
+                        </goals>
+                        <configuration>
+                            <wait>1000</wait> <!-- 1000 milliseconds is default -->
+                            <maxAttempts>120</maxAttempts> <!-- 30 attempts is default, combined with wait it results to 30 sec. We wait 60 seconds. -->
+                            <profiles>local</profiles>
+                            <arguments>
+                                <argument>-Xmx1024m</argument>
+                                <argument>--server.port=${tomcat.http.port}</argument>
+                                <argument>--spring.cloud.kubernetes.enabled=false</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
                         <id>build-docker-image</id>
                         <goals>
                             <goal>build-image-no-fork</goal>
                         </goals>
+                        <phase>install</phase>
+                        <configuration>
+                            <image>
+                                <name>local/${project.artifactId}:latest</name>
+                                <tags>
+                                    local/${project.artifactId}:${project.version}
+                                </tags>
+                                <publish>false</publish>
+                            </image>
+                        </configuration>
                     </execution>
 
                     <execution>
@@ -198,13 +276,18 @@
                         <configuration>
                             <skip>${skip.docker.publish}</skip>
                             <image>
-                                <name>ghcr.io/${organization.name}/${project.artifactId}:${project.version}</name>
+                                <name>ghcr.io/${organization.name}/${project.artifactId}:latest</name>
+                                <tags>
+                                    ghcr.io/${organization.name}/${project.artifactId}:${project.version}
+                                </tags>
                                 <publish>true</publish>
                             </image>
                             <docker>
                                 <publishRegistry>
                                     <!-- GITHUB_ACTOR and GITHUB_TOKEN are set by gitHub Actions -->
+                                    <!--suppress UnresolvedMavenProperty -->
                                     <username>${env.GITHUB_ACTOR}</username>
+                                    <!--suppress UnresolvedMavenProperty -->
                                     <password>${env.GITHUB_TOKEN}</password>
                                     <url>https://ghcr.io</url><!-- gitHub packages -->
                                 </publishRegistry>
@@ -221,13 +304,20 @@
                         <configuration>
                             <skip>${skip.docker.publish}</skip>
                             <image>
-                                <name>${env.DOCKER_USER}/${project.artifactId}:${project.version}</name>
+                                <!--suppress UnresolvedMavenProperty -->
+                                <name>${env.DOCKER_USER}/${project.artifactId}:latest</name>
+                                <tags>
+                                    <!--suppress UnresolvedMavenProperty -->
+                                    ${env.DOCKER_USER}/${project.artifactId}:${project.version}
+                                </tags>
                                 <publish>true</publish>
                             </image>
                             <docker>
                                 <publishRegistry>
                                     <!-- DOCKER_USER and DOCKER_TOKEN are set by gitHub Actions -->
+                                    <!--suppress UnresolvedMavenProperty -->
                                     <username>${env.DOCKER_USER}</username>
+                                    <!--suppress UnresolvedMavenProperty -->
                                     <password>${env.DOCKER_TOKEN}</password>
                                     <url>https://index.docker.io/v1/</url>
                                 </publishRegistry>
@@ -322,16 +412,5 @@
             </plugin>
         </plugins>
     </build>
-    
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 
 </project>
