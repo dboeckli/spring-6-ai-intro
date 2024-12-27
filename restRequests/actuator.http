@@ -1,0 +1,42 @@
+### actuator
+GET http://localhost:8080/actuator
+Accept: application/json
+
+### actuator info
+GET http://localhost:8080/actuator/info
+Accept: application/json
+
+### actuator health
+GET http://localhost:8080/actuator/health
+Accept: application/json
+
+### actuator health
+GET http://localhost:8080/actuator/health/readiness
+Accept: application/json
+
+### actuator health
+GET http://localhost:8080/actuator/health/liveness
+Accept: application/json
+
+### actuator metrics
+GET localhost:8080/actuator/metrics
+Accept: application/json
+
+### actuator env
+GET localhost:8080/actuator/env
+Accept: application/json
+
+### actuator env
+GET localhost:8080/actuator/configprops
+Accept: application/json
+
+### actuator beans
+GET localhost:8080/actuator/beans
+Accept: application/json
+
+### actuator caches
+GET localhost:8080/actuator/caches
+Accept: application/json
+
+### actuator get loggers
+GET localhost:8080/actuator/loggers
