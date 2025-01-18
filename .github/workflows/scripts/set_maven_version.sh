@@ -29,13 +29,16 @@ echo "### Cleaned branch is  $branch"
 echo "BRANCH_NAME=$branch" >>"$GITHUB_OUTPUT"
 
 # Get current Maven project version
-MVN_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout) || error_exit "Failed to evaluate Maven project version."
-ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout) || error_exit "Failed to evaluate Maven artifact ID."
-GROUP_ID=$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout) || error_exit "Failed to evaluate Maven group ID."
+MVN_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -e -DforceStdout 2>&1) || { error_output=$MVN_VERSION; error_exit "Failed to evaluate Maven project version. Error: $error_output"; }
+ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -e -DforceStdout 2>&1) || { error_output=$ARTIFACT_ID; error_exit "Failed to evaluate Maven artifact ID. Error: $error_output"; }
+GROUP_ID=$(mvn help:evaluate -Dexpression=project.groupId -q -e -DforceStdout 2>&1) || { error_output=$GROUP_ID; error_exit "Failed to evaluate Maven group ID. Error: $error_output"; }
+ORGANIZATION=$(mvn help:evaluate -Dexpression=project.organization.name -q -e -DforceStdout 2>&1) || { error_output=$ORGANIZATION; error_exit "Failed to evaluate ORGANIZATION. Error: $error_output"; }
+
 # Log to GitHub Actions output
 echo "MVN_VERSION=$MVN_VERSION" >>"$GITHUB_OUTPUT"
 echo "ARTIFACT_ID=$ARTIFACT_ID" >>"$GITHUB_OUTPUT"
 echo "GROUP_ID=$GROUP_ID" >>"$GITHUB_OUTPUT"
+echo "ORGANIZATION=$ORGANIZATION" >>"$GITHUB_OUTPUT"
 echo "### Current version is: $MVN_VERSION"
 
 # Extract version parts
