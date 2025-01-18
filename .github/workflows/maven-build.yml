@@ -122,17 +122,17 @@ jobs:
           # Check if required parameters are set
           required_params=("GITHUB_ACTOR" "GITHUB_TOKEN" "BRANCH_MVN_VERSION" "BRANCH_NAME" "DOCKER_USER" "DOCKER_TOKEN" "OPENAI_API_KEY")
           for param in "${required_params[@]}"; do
-            if [ -z "${!param}" ]; then
-              echo "::error::Required parameter $param is not set"
-              exit 1
-            fi
+          if [ -z "${!param}" ]; then
+          echo "::error::Required parameter $param is not set"
+          exit 1
+          fi
           done
           
           if [[ "${BRANCH_NAME}" == "master" ||  "${BRANCH_NAME}" == "main" ]]; then
-            echo "::notice:: ### Build of Master. Version: $BRANCH_MVN_VERSION"
+          echo "::notice:: ### Build of Master. Version: $BRANCH_MVN_VERSION"
           else
-            echo "::notice:: ### Build of Feature Branch ${BRANCH_NAME}. Version: $BRANCH_MVN_VERSION"
-            mvn -B versions:set -e -DnewVersion="$BRANCH_MVN_VERSION"
+          echo "::notice:: ### Build of Feature Branch ${BRANCH_NAME}. Version: $BRANCH_MVN_VERSION"
+          mvn -B versions:set -e -DnewVersion="$BRANCH_MVN_VERSION"
           fi
           mvn -B -e deploy -s $GITHUB_WORKSPACE/settings.xml
   
