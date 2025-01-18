@@ -31,8 +31,8 @@ class ActuatorInfoTest {
             .andExpect(jsonPath("$.build.javaVersion").value("21"))
             .andExpect(jsonPath("$.build.commit-id").isString())
             .andExpect(jsonPath("$.build.javaVendor").isString())
-            .andExpect(jsonPath("$.build.artifact").value("spring-6-rest-mvc"))
-            .andExpect(jsonPath("$.build.group").value("ch.dboeckli.springframeworkguru.spring-rest-mvc"))
+            .andExpect(jsonPath("$.build.artifact").value("spring-6-ai-intro"))
+            .andExpect(jsonPath("$.build.group").value("guru.springframework"))
             .andReturn();
         
         log.info("Response: {}", result.getResponse().getContentAsString());
