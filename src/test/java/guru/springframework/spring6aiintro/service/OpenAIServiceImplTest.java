@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
@@ -51,7 +52,7 @@ class OpenAIServiceImplTest {
         GetCapitalRequest request = new GetCapitalRequest("Spain");
         Answer answer = openAIService.getCapitalWithInfo(request);
         assertThat(answer.answer(), containsString("Madrid"));
-        assertThat(answer.answer().length(), org.hamcrest.Matchers.greaterThan(20));
+        assertThat(answer.answer().length(), greaterThan(20));
     }
 
     @Test
