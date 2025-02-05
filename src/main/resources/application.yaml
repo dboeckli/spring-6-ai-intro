@@ -42,4 +42,4 @@ logbook:
       - password
   predicate:
     exclude:
-      - path: /actuator/health             
+      - path: /actuator/health/**            
