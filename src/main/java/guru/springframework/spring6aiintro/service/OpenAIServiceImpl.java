@@ -50,7 +50,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         PromptTemplate promptTemplate = new PromptTemplate(question);
         Prompt prompt = promptTemplate.create();
         ChatResponse response = chatModel.call(prompt);
-        return response.getResult().getOutput().getContent();
+        return response.getResult().getOutput().getText();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         PromptTemplate promptTemplate = new PromptTemplate(question.question());
         Prompt prompt = promptTemplate.create();
         ChatResponse response = chatModel.call(prompt);
-        return new Answer(response.getResult().getOutput().getContent());
+        return new Answer(response.getResult().getOutput().getText());
     }
 
     @Override
@@ -67,7 +67,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName()));
         ChatResponse response = chatModel.call(prompt);
 
-        return new Answer(response.getResult().getOutput().getContent());
+        return new Answer(response.getResult().getOutput().getText());
     }
 
     @Override
@@ -76,7 +76,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName()));
         ChatResponse response = chatModel.call(prompt);
 
-        return new Answer(response.getResult().getOutput().getContent());
+        return new Answer(response.getResult().getOutput().getText());
     }
 
     @Override
@@ -90,7 +90,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName(), "format", format));
 
         ChatResponse response = chatModel.call(prompt);
-        return converter.convert(response.getResult().getOutput().getContent());
+        return converter.convert(response.getResult().getOutput().getText());
     }
 
     @Override
@@ -99,14 +99,14 @@ public class OpenAIServiceImpl implements OpenAIService {
         Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName()));
         ChatResponse response = chatModel.call(prompt);
 
-        log.info("Response: " + response.getResult().getOutput().getContent());
+        log.info("Response: " + response.getResult().getOutput().getText());
         String responseString;
         try {
-            JsonNode jsonNode = objectMapper.readTree(response.getResult().getOutput().getContent());
+            JsonNode jsonNode = objectMapper.readTree(response.getResult().getOutput().getText());
             responseString = jsonNode.get("answer").asText();
 
         } catch (JsonProcessingException ex) {
-            log.error("Error parsing JSON response: " + response.getResult().getOutput().getContent(), ex);
+            log.error("Error parsing JSON response: " + response.getResult().getOutput().getText(), ex);
             throw new RuntimeException(ex);
         }
         return new Answer(responseString);
@@ -124,6 +124,6 @@ public class OpenAIServiceImpl implements OpenAIService {
         Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName(), "format", format));
 
         ChatResponse response = chatModel.call(prompt);
-        return converter.convert(response.getResult().getOutput().getContent());
+        return converter.convert(response.getResult().getOutput().getText());
     }
 }
