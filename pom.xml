@@ -42,7 +42,7 @@
         <skip.start.stop.springboot>false</skip.start.stop.springboot>
 
         <logbook.version>3.11.0</logbook.version>
-        <logstash-logback.version>8.0</logstash-logback.version>
+        <logstash-logback.version>8.1</logstash-logback.version>
 
         <!-- Sonar -->
         <sonar-maven-plugin.version>5.1.0.4751</sonar-maven-plugin.version>
