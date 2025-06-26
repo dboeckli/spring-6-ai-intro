@@ -41,7 +41,7 @@
         <skip.docker.publish>true</skip.docker.publish>
         <skip.start.stop.springboot>false</skip.start.stop.springboot>
 
-        <logbook.version>3.12.1</logbook.version>
+        <logbook.version>3.12.2</logbook.version>
         <logstash-logback.version>8.1</logstash-logback.version>
 
         <!-- Sonar -->
