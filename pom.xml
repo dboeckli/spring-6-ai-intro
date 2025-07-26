@@ -39,7 +39,7 @@
         <skip.docker.build>false</skip.docker.build>
         <skip.docker.publish>true</skip.docker.publish>
         <skip.start.stop.springboot>false</skip.start.stop.springboot>
-
+      
         <docker.image.tag>development</docker.image.tag> <!-- for feature branches -->
         <docker.repo>local</docker.repo>
 
