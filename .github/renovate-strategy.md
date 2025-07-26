@@ -1,5 +1,7 @@
 # Renovate Strategy
 
+## Go here: https://developer.mend.io/github/dboeckli
+
 1. Use separate rules for domboeckli images and other Docker images.
 2. For domboeckli images, use Maven versioning strategy to align with Java project versioning.
 3. Pin versions for stability, especially for images with 'latest' or single number versions.

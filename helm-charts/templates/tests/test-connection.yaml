@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "application-template.fullname" . }}-test-connection"
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "application-template.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: test-actuator-health
+      image: {{.Values.busyboxImage.repository }}:{{.Values.busyboxImage.tag }}
+      imagePullPolicy: {{.Values.busyboxImage.pullPolicy }}
+      command: [ '/bin/sh', '-c' ]
+      args:
+        - |
+          ERROR_OCCURED=0
+
+          echo "### Test 1: Checking health endpoint using service short name: {{ include "application-template.fullname" . }}"
+          wget -O- -q {{ include "application-template.fullname" . }}:{{ .Values.service.port }}/actuator/health
+          echo "Exit code: $?"
+          if [ $? -ne 0 ]; then
+            ERROR_OCCURED=1
+          fi
+
+          echo "### Test 2: Checking health endpoint using fully qualified domain name (FQDN): {{ include "application-template.serviceFQDN" . }}"
+          wget -O- -q {{ include "application-template.serviceFQDN" . }}:{{ .Values.service.port }}/actuator/health
+          echo "Exit code: $?"
+          if [ $? -ne 0 ]; then
+            ERROR_OCCURED=1
+          fi
+
+          if [ $ERROR_OCCURED -ne 0 ]; then
+            # Print DNS configuration
+            echo "### DNS Configuration:"
+            cat /etc/resolv.conf
+
+            # Test DNS resolution
+            echo "### Testing DNS resolution:"
+            AP_FQDN="{{ include "application-template.serviceFQDN" . }}"
+            echo "nslookup AP_FQDN: $AP_FQDN"
+            nslookup $AP_FQDN
+          fi
+
+  restartPolicy: Never

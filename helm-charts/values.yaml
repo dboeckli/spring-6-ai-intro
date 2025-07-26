@@ -1,0 +1,50 @@
+global:
+  timezone: Europe/Zurich
+  timezonePath: /etc/localtime
+  springDebug: false
+  namespace: spring-6-ai-intro
+
+replicaCount: 1
+
+image:
+  # Those values are set by Maven filtering
+  # and will be replaced with a valid version number during the build process.
+  registry: @docker.repo@
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 8080
+  targetPort: 8080
+  nodePort: 30080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+spring:
+  profiles:
+    active: local
+
+probes:
+  startup:
+    failureThreshold: 30
+    periodSeconds: 10
+  readiness:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  liveness:
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    
+openai:
+  apiKey: ""  # Leer lassen, wird über --set oder values.yaml override gesetzt
+
+ingress:
+  enabled: false

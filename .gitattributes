@@ -1,2 +1,23 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+
+# make sure that the line endings are in linux format.
+* text eol=lf
+# Denote all files that are truly binary and should not be modified.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.gif binary
+*.ico binary
+*.jks binary
+*.crt binary
+*.exe binary
+*.gz binary
+*.gz binary
+*.sh binary
+*.tgz binary
+*.tar.gz binary
+*.zip binary
+*.jar binary
+*.node binary
