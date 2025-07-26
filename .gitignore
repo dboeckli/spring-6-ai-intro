@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 /.run/Spring6AiIntroApplication.run.xml
+/.run/.openapi-key-env
