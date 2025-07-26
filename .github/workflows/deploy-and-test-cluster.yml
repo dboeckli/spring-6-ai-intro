@@ -85,8 +85,8 @@ jobs:
           fi
           
           # Verify if OPENAI_API_KEY is base64 encoded
-          if ! echo "$OPENAI_API_KEY" | base64 -d > /dev/null 2>&1; then
-            echo "::error::OPENAI_API_KEY is not base64 encoded. Aborting deployment."
+          if echo "$OPENAI_API_KEY" | base64 -d > /dev/null 2>&1; then
+            echo "::error::OPENAI_API_KEY is base64 encoded. Aborting deployment."
             exit 1
           fi
           
