@@ -107,11 +107,14 @@ jobs:
             exit 1
           fi
           
+          # Base64 encode the OPENAI_API_KEY
+          ENCODED_API_KEY=$(echo -n "$OPENAI_API_KEY" | base64 -w 0)
+          
           # Install/upgrade the Helm chart
           echo "Deploying Application $APPLICATION_NAME: $APP_VERSION"
           helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME \
           --set image.tag=${APP_VERSION} \
-          --set openai.apiKey="${{ secrets.OPENAI_API_KEY }}" \
+          --set openai.apiKey="$ENCODED_API_KEY" \
           --namespace ${NAMESPACE} \
           --create-namespace \
           --cleanup-on-fail \
