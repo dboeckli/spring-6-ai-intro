@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [ "main", "master" ]
   schedule:
-    - cron: '5 5 * * *' # daily at 5:05
+    - cron: '5 2 * * *' # daily at 2:05
 jobs:
 
   setup:
@@ -39,6 +39,35 @@ jobs:
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml.
           settings-path: ${{ github.workspace }} # location for the settings.xml file
 
+      - name: Verify Variables and Secrets
+        env:
+          DOCKER_USER: ${{ vars.DOCKER_USER }}
+          CI_USER: ${{ vars.CI_USER }}
+          CI_USER_EMAIL: ${{ vars.CI_USER_EMAIL }}
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          TRIGGER_WORKFLOW_TOKEN: ${{ secrets.TRIGGER_WORKFLOW_TOKEN }}
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          required_vars=("DOCKER_USER" "CI_USER" "CI_USER_EMAIL")
+          required_secrets=("DOCKER_ACCESS_TOKEN" "SONAR_TOKEN" "TRIGGER_WORKFLOW_TOKEN" "RELEASE_TOKEN")
+          
+          for param in "${required_vars[@]}"; do
+            if [ -z "${!param}" ]; then
+              echo "::error::Required parameter $param is not set"
+              exit 1
+            fi
+          done
+          
+          for param in "${required_secrets[@]}"; do
+            if [ -z "${!param}" ]; then
+              echo "::error::Required parameter $param is not set"
+              exit 1
+            fi
+          done
+          
+          echo "All required variables and secrets are set."
+
       - name: Set Maven Versions
         id: set_version
         env:
@@ -55,10 +84,28 @@ jobs:
           ALLMYSECRETS: ${{ toJSON(secrets) }}
           ALLMYVARS: ${{ toJSON(vars) }}
           ALLMYOUTPUT: ${{ toJSON(steps.set_version.outputs) }}
+          BRANCH_MVN_VERSION: ${{ steps.set_version.outputs.BRANCH_MVN_VERSION }}
+          BRANCH_NAME: ${{ steps.set_version.outputs.BRANCH_NAME }}
+          MVN_VERSION: ${{ steps.set_version.outputs.MVN_VERSION }}
+          ARTIFACT_ID: ${{ steps.set_version.outputs.ARTIFACT_ID }}
+          GROUP_ID: ${{ steps.set_version.outputs.GROUP_ID }}
+          ORGANIZATION: ${{ steps.set_version.outputs.ORGANIZATION }}
+
         run: |
           echo "### ALLMYSECRETS: $ALLMYSECRETS"
           echo "### ALLMYVARS: $ALLMYVARS"
           echo "### ALLMYOUTPUT: $ALLMYOUTPUT"
+          
+          # Verify required outputs from set_version step
+          required_outputs=("BRANCH_MVN_VERSION" "BRANCH_NAME" "MVN_VERSION" "ARTIFACT_ID" "GROUP_ID" "ORGANIZATION")
+          
+          for param in "${required_outputs[@]}"; do
+            if [ -z "${!param}" ]; then
+              echo "::error::Required parameter $param is not set"
+              exit 1
+            fi
+          done
+          
           echo ":sunflower: Cleaned Branch Name: ${{ steps.set_version.outputs.BRANCH_NAME }}" >> $GITHUB_STEP_SUMMARY
           echo ":maple_leaf: ORGANIZATION: ${{ steps.set_version.outputs.ORGANIZATION }}" >> $GITHUB_STEP_SUMMARY
           echo ":maple_leaf: GROUP ID: ${{ steps.set_version.outputs.GROUP_ID }}" >> $GITHUB_STEP_SUMMARY
@@ -66,12 +113,16 @@ jobs:
           echo ":maple_leaf: Original Maven version: ${{ steps.set_version.outputs.MVN_VERSION }}" >> $GITHUB_STEP_SUMMARY
           echo ":cactus: Calculated Maven Version: ${{ steps.set_version.outputs.BRANCH_MVN_VERSION }}" >> $GITHUB_STEP_SUMMARY
   
-  
+
   build:
     runs-on: ubuntu-latest
 
     needs: [ setup ]
     if: endsWith(needs.setup.outputs.MVN_VERSION, '-SNAPSHOT')
+
+    outputs:
+      HELM_CHART_VERSION: ${{ steps.get_helm_version_and_namespace.outputs.HELM_CHART_VERSION }}
+      NAMESPACE: ${{ steps.get_helm_version_and_namespace.outputs.NAMESPACE }}
 
     permissions:
       contents: read
@@ -91,7 +142,49 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml.
-          settings-path: ${{ github.workspace }} # location for the settings.xml file  
+          settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.12.0
+
+      - name: Helm workaround
+        # This is a workaround because the helm push does not work the standard way. helm login file under ~/.config/helm/registry/config.json is ignored.
+        # Instead, we use the docker login file under ~/.docker/config.json
+        # see: https://github.com/helm/helm/issues/30929 and https://github.com/helm/helm/issues/30942
+        env:
+          DOCKER_USER: ${{ vars.DOCKER_USER }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+        run: |
+          set -o pipefail
+          set -o nounset
+          set -o errexit
+
+          rm -f ~/.config/helm/registry/config.json
+
+          echo "Helm version:"
+          helm version --short
+
+          # Base64-Encode: username:token
+          AUTH=$(echo -n "$DOCKER_USER:$DOCKER_TOKEN" | base64)
+
+          # Zielverzeichnis anlegen
+          mkdir -p ~/.docker
+
+          # Docker config.json erzeugen
+          cat > ~/.docker/config.json <<EOF
+          {
+            "auths": {
+              "https://index.docker.io/v1/": {
+                "auth": "$AUTH"
+              },
+              "registry-1.docker.io": {
+                "auth": "$AUTH"
+              }
+            }
+          }
+          EOF
+
+          echo "✅ Docker config.json added to ~/.docker/config.json"      
 
       - name: show variables
         id: show_build_variables
@@ -109,37 +202,76 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           BRANCH_MVN_VERSION: ${{needs.setup.outputs.BRANCH_MVN_VERSION}}
           BRANCH_NAME: ${{needs.setup.outputs.BRANCH_NAME}}
           DOCKER_USER: ${{ vars.DOCKER_USER }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set -o pipefail    # don't hide errors within pipes
           set -o nounset     # abort on unbound variable
           set -o errexit     # abort on nonzero exit status
           
           # Check if required parameters are set
-          required_params=("GITHUB_ACTOR" "GITHUB_TOKEN" "BRANCH_MVN_VERSION" "BRANCH_NAME" "DOCKER_USER" "DOCKER_TOKEN" "OPENAI_API_KEY")
+          required_params=("GITHUB_ACTOR" "GITHUB_TOKEN" "OPENAI_API_KEY")
           for param in "${required_params[@]}"; do
-          if [ -z "${!param}" ]; then
-          echo "::error::Required parameter $param is not set"
-          exit 1
-          fi
+            if [ -z "${!param}" ]; then
+              echo "::error::Required parameter $param is not set"
+              exit 1
+            fi
           done
           
           if [[ "${BRANCH_NAME}" == "master" ||  "${BRANCH_NAME}" == "main" ]]; then
-          echo "::notice:: ### Build of Master. Version: $BRANCH_MVN_VERSION"
+            echo "::notice:: ### Build of Master. Version: $BRANCH_MVN_VERSION"
           else
-          echo "::notice:: ### Build of Feature Branch ${BRANCH_NAME}. Version: $BRANCH_MVN_VERSION"
-          mvn -B versions:set -e -DnewVersion="$BRANCH_MVN_VERSION"
+            echo "::notice:: ### Build of Feature Branch ${BRANCH_NAME}. Version: $BRANCH_MVN_VERSION"
+            mvn -B versions:set -e -DnewVersion="$BRANCH_MVN_VERSION"
           fi
           mvn -B -e deploy -s $GITHUB_WORKSPACE/settings.xml
-  
+
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v4.6.2
+        if: failure()
+        with:
+          name: failsafe-and-surefire-reports
+          path: |
+            target/failsafe-reports/
+            target/surefire-reports/
+
+      - name: get helm version and namespace
+        id: get_helm_version_and_namespace
+        env:
+          ARTIFACT_ID: ${{needs.setup.outputs.ARTIFACT_ID}}
+        run: |
+          set -o pipefail    # don't hide errors within pipes
+          set -o nounset     # abort on unbound variable
+          set -o errexit     # abort on nonzero exit status 
+          
+          HELM_CHART_VERSION=$(grep 'helm.chart.version' target/helm.properties | cut -d'=' -f2)
+          echo "### helm chart version is: $HELM_CHART_VERSION"
+          echo "HELM_CHART_VERSION=$HELM_CHART_VERSION" >> $GITHUB_OUTPUT
+          
+          YAML_FILE="target/helm-templated/$ARTIFACT_ID/templates/deployment.yaml"
+          if [ -f "$YAML_FILE" ]; then
+            NAMESPACE=$(grep '^\s*namespace:' "$YAML_FILE" | awk '{print $2}' | tr -d '"')
+            if [ -z "$NAMESPACE" ]; then
+              echo "::warning::No namespace found in $YAML_FILE, using default"
+              NAMESPACE="default"
+            fi
+          else
+            echo "::error::File $YAML_FILE not found"
+            exit 1
+          fi
+          echo "### namespace is: $NAMESPACE"
+          echo "NAMESPACE=$NAMESPACE" >> $GITHUB_OUTPUT 
+          
+          echo ":sailboat: Helm Chart Version: $HELM_CHART_VERSION" >> $GITHUB_STEP_SUMMARY
+          echo ":sailboat: Namespace: $NAMESPACE" >> $GITHUB_STEP_SUMMARY
+
   analyze:
     runs-on: ubuntu-latest
     needs: [ setup ]
-    
+
     permissions:
       contents: read
       packages: write
@@ -160,24 +292,27 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml.
-          settings-path: ${{ github.workspace }} # location for the settings.xml file       
+          settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.12.0
 
       - name: Run Maven Build
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           BRANCH_MVN_VERSION: ${{needs.setup.outputs.BRANCH_MVN_VERSION}}
           BRANCH_NAME: ${{needs.setup.outputs.BRANCH_NAME}}
           DOCKER_USER: ${{ vars.DOCKER_USER }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set -o pipefail    # don't hide errors within pipes
           set -o nounset     # abort on unbound variable
           set -o errexit     # abort on nonzero exit status
 
           # Check if required parameters are set
-          required_params=("GITHUB_ACTOR" "GITHUB_TOKEN" "BRANCH_MVN_VERSION" "BRANCH_NAME" "DOCKER_USER" "DOCKER_TOKEN" "OPENAI_API_KEY")
+          required_params=("GITHUB_ACTOR" "GITHUB_TOKEN" "OPENAI_API_KEY")
           for param in "${required_params[@]}"; do
             if [ -z "${!param}" ]; then
               echo "::error::Required parameter $param is not set"
@@ -191,7 +326,7 @@ jobs:
             echo "::notice:: ### Build of Feature Branch ${BRANCH_NAME}. Version: $BRANCH_MVN_VERSION"
             mvn -B versions:set -e -DnewVersion="$BRANCH_MVN_VERSION"
           fi
-          mvn -B -e install -Dskip.start.stop.springboot=true -s $GITHUB_WORKSPACE/settings.xml	
+          mvn -B -e verify -Dskip.start.stop.springboot=true -Dskip.docker.build=true -Dskip.docker.publish=true -s $GITHUB_WORKSPACE/settings.xml	
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -212,20 +347,11 @@ jobs:
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
           ORGANIZATION: ${{needs.setup.outputs.ORGANIZATION}}
           ARTIFACT_ID: ${{needs.setup.outputs.ARTIFACT_ID}}
-        
+
         run: |
           set -o pipefail    # don't hide errors within pipes
           set -o nounset     # abort on unbound variable
           set -o errexit     # abort on nonzero exit status
-          
-          # Check if required parameters are set
-          required_params=("SONAR_TOKEN")
-          for param in "${required_params[@]}"; do
-            if [ -z "${!param}" ]; then
-              echo "::error::Required parameter $param is not set"
-              exit 1
-            fi
-          done
           
           if [[ "${BRANCH_NAME}" == "master" ||  "${BRANCH_NAME}" == "main" ]]; then
             mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
@@ -248,3 +374,40 @@ jobs:
                   -Dsonar.branch.name=${BRANCH_NAME} \
                   -Dsonar.branch.target=master
           fi 
+
+  Trigger-Deploy:
+    runs-on: ubuntu-latest
+    needs: [ setup, build ]
+    if: github.event_name != 'pull_request'
+
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - name: Trigger Deployment
+        #if: success()  # This ensures the step only runs if all previous steps were successful
+        # TODO: ENABLE ME
+        if: false
+        env:
+          GH_TOKEN: ${{ secrets.TRIGGER_WORKFLOW_TOKEN }}
+          BRANCH_MVN_VERSION: ${{needs.setup.outputs.BRANCH_MVN_VERSION}}
+          HELM_CHART_VERSION: ${{needs.build.outputs.HELM_CHART_VERSION}}
+          NAMESPACE: ${{needs.build.outputs.NAMESPACE}}
+          ARTIFACT_ID: ${{needs.setup.outputs.ARTIFACT_ID}}
+        run: |
+          echo "Trigger Deployment with variables"
+          echo "ARTIFACT_ID: $ARTIFACT_ID"
+          echo "BRANCH_MVN_VERSION: $BRANCH_MVN_VERSION"
+          echo "HELM_CHART_VERSION: $HELM_CHART_VERSION"
+          echo "NAMESPACE: $NAMESPACE"
+          
+          gh workflow run deploy-and-test-cluster.yml -R ${{ github.repository }} -r ${{ github.ref }} \
+          -f "application-name=$ARTIFACT_ID" \
+          -f "version=$BRANCH_MVN_VERSION" \
+          -f "helm-chart-version=$HELM_CHART_VERSION" \
+          -f "namespace=$NAMESPACE" \
+          -f "deployed-by-build=${{ github.run_id }}" \
+          -f "deployed-by-workflow=${{ github.workflow }}"
+
+        

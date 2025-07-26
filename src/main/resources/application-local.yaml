@@ -1,6 +1,9 @@
 spring:
   application:
     name: spring-6-ai-intro
+
+  #config:
+  #  import: optional:file:.openapi-key-env
     
   ai:
     openai:

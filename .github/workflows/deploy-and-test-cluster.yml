@@ -1,0 +1,164 @@
+name: Deploy and Test Cluster
+run-name: >
+  ${{ github.workflow }}: ${{ github.event_name }} for ${{ github.ref_name }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      application-name:
+        type: string
+        description: 'Application Name'
+        required: true
+      version:
+        type: string
+        description: 'Version to deploy'
+        required: true
+      helm-chart-version:
+        type: string
+        description: 'Helm Chart Version'
+        required: true
+      namespace:
+        type: string
+        description: 'Namespace'
+        required: true
+      deployed-by-build:
+        type: string
+        description: 'Build number of trigger build'
+        required: true
+        default: 'None'
+      deployed-by-workflow:
+        type: string
+        description: 'Name of trigger workflow'
+        required: true
+        default: 'None'
+
+jobs:
+  deploy-app-with-helm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show Version
+        run: |
+          echo "Deploying Application ${{ inputs.application-name }} with Version: ${{ inputs.version }}, Helm chart version: ${{ inputs.helm-chart-version }}, to namespace ${{ inputs.namespace }}"
+          echo "Deployment triggered by workflow ${{ inputs.deployed-by-workflow }}. Run number: ${{ inputs.deployed-by-build }}"
+
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.12.0
+
+      - name: Pull Helm Chart
+        env:
+          HELM_CHART_VERSION: ${{ inputs.helm-chart-version }}
+          DOCKER_USER: ${{ vars.DOCKER_USER }}
+          APPLICATION_NAME: ${{ inputs.application-name }}
+        run: |
+          echo "Pulling Helm Chart Version: $HELM_CHART_VERSION from oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME"
+          helm pull oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME --version "$HELM_CHART_VERSION"
+          tar -xvf $APPLICATION_NAME-v*.tgz  
+
+      - name: Deploy application with Helm
+        env:
+          APP_VERSION: ${{ inputs.version }}
+          APPLICATION_NAME: ${{ inputs.application-name }}
+          NAMESPACE: ${{ inputs.namespace }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # Check if OPENAI_API_KEY is empty
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::OPENAI_API_KEY is empty. Aborting deployment."
+            exit 1
+          fi
+          
+          # Install/upgrade the Helm chart
+          echo "Deploying Application $APPLICATION_NAME: $APP_VERSION"
+          helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME \
+          --set image.tag=${APP_VERSION} \
+          --set openai.apiKey="${{ secrets.OPENAI_API_KEY }}" \
+          --namespace ${NAMESPACE} \
+          --create-namespace \
+          --cleanup-on-fail \
+          --atomic \
+          --wait --timeout 5m \
+          --render-subchart-notes
+
+      - name: Wait for Pods to be ready
+        env:
+          NAMESPACE: ${{ inputs.namespace }}
+          APPLICATION_NAME: ${{ inputs.application-name }}
+        run: |
+          if ! kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=$APPLICATION_NAME -n $NAMESPACE --timeout=180s; then
+            POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=$APPLICATION_NAME -o jsonpath="{.items[0].metadata.name}" -n $NAMESPACE)
+            kubectl logs $POD_NAME -n $NAMESPACE
+            echo "Describing the pod:"
+            kubectl describe pod $POD_NAME -n $NAMESPACE
+            exit 1
+          fi
+          BUILD_LINK="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.deployed-by-build }}"
+          echo "::notice:: ### Helm Deployed Version: ${{ inputs.version }}"
+          echo "::notice:: ### Deployment triggered by workflow ${{ inputs.deployed-by-workflow }}. Run number: ${{ inputs.deployed-by-build }}: $BUILD_LINK"
+
+      - name: Test Application
+        env:
+          APP_VERSION: ${{ inputs.version }}
+          APPLICATION_NAME: ${{ inputs.application-name }}
+          NAMESPACE: ${{ inputs.namespace }}
+        run: |
+          echo "::group::Application Deployment Status"
+          echo "Checking status of $APPLICATION_NAME (version $APP_VERSION) in namespace $NAMESPACE"
+          echo "Helm Release Details:"
+          helm status $APPLICATION_NAME --namespace ${NAMESPACE}
+          echo "::endgroup::"
+          
+          echo "::group::Helm Test Raw Output"
+          echo "Testing Application $APPLICATION_NAME: $APP_VERSION"
+          TEST_OUTPUT=$(helm test $APPLICATION_NAME --namespace ${NAMESPACE} --logs)
+          TEST_EXIT_CODE=$?
+          echo "Exit Code: $TEST_EXIT_CODE"
+          echo "$TEST_OUTPUT"
+          echo "::endgroup::"
+          
+          # Check all test exit codes
+          if echo "$TEST_OUTPUT" | grep -q "Exit code: [^0]"; then
+            echo "::error::One or more Helm tests failed. See details above:"
+            exit 1
+          elif [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::error::Helm test command failed with exit code $TEST_EXIT_CODE"
+            exit $TEST_EXIT_CODE
+          else
+            echo "All Helm tests passed successfully."
+          fi                 
+
+      - name: Display Deployment Information
+        env:
+          NAMESPACE: ${{ inputs.namespace }}
+          APPLICATION_NAME: ${{ inputs.application-name }}
+        if: always()
+        run: |
+          echo "Deployment Information:"
+          
+          echo "--- Pods in $NAMESPACE namespace:"
+          kubectl get pods -n $NAMESPACE
+          
+          echo "--- Describe pods in $NAMESPACE namespace:"
+          kubectl describe pods -n $NAMESPACE
+          
+          echo "--- Show Events in $NAMESPACE namespace:"
+          kubectl get events --sort-by=.metadata.creationTimestamp -n $NAMESPACE
+          
+          echo "--- Show Logs (if pods exist)"
+          PODS=$(kubectl get pods -o jsonpath="{.items[*].metadata.name}" -n $NAMESPACE)
+          echo "Found pods: $PODS"
+          if [ -n "$PODS" ]; then
+            for POD in $PODS; do
+              echo "---------------- Logs for pod $POD:"
+              kubectl logs $POD -n $NAMESPACE --all-containers
+              echo "---------------- End of Logs for pod $POD:"
+            done
+          else
+            echo "No pods found with label app.kubernetes.io/name=$APPLICATION_NAME in $NAMESPACE namespace"
+            echo "Listing all pods in $NAMESPACE namespace:"
+            kubectl get pods -n $NAMESPACE
+          fi          
+

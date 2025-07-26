@@ -1,61 +1,100 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "mergeConfidence:all-badges",
-    "config:recommended"
-  ],
-  "enabledManagers": [
-    "docker-compose"
-  ],
-  "docker-compose": {
-    "enabled": true
-  },
-  "docker": {
-    "registryUrls": ["https://index.docker.io"]
-  },
-  "packageRules": [
-    {
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "/^domboeckli//"
-      ],
-      "versioning": "maven",
-      "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?$/",
-      "ignoreUnstable": false,
-      "automerge": false,
-      "automergeType": "pr",
-      "ignoreTests": true
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "mergeConfidence:all-badges",
+        "config:recommended"
+    ],
+    "enabledManagers": [
+        "docker-compose",
+        "maven-wrapper",
+        "kubernetes",
+        "helm-values",
+        "helmv3"
+    ],
+    "maven-wrapper": {
+        "managerFilePatterns": [
+            "/(^|/)mvnw$/",
+            "/(^|/)mvnw.cmd$/",
+            "/(^|/).mvn/wrapper/maven-wrapper.properties$/"
+        ],
+        "versioning": "maven"
     },
-    {
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "!/^domboeckli//"
-      ],
-      "automerge": false,
-      "automergeType": "pr",
-      "ignoreTests": true
-    }
-  ],
-  "ignoreDeps": [
-    "maven"
-  ],
-  "schedule": [
-    "before 5am"
-  ],
-  "platformAutomerge": false,
-  "dependencyDashboard": false,
-  "prHourlyLimit": 0,
-  "prConcurrentLimit": 0,
-  "baseBranches": [
-    "master"
-  ],
-  "branchPrefix": "feature/renovate-",
-  "separateMinorPatch": true,
-  "separateMajorMinor": true,
-  "automerge": false,
-  "rebaseWhen": "conflicted"
+    "docker-compose": {
+        "enabled": true
+    },
+    "kubernetes": {
+        "managerFilePatterns": [
+            "/k8s/.+\\.ya?ml$/",
+            "/helm-charts/.+\\.ya?ml$/"
+        ]
+    },
+    "helm-values": {
+        "managerFilePatterns": [
+            "/helm-charts/values\\.ya?ml$/",
+            "/helm-charts/dependencies-values\\.ya?ml$/",
+            "/helm-charts/.+/values\\.ya?ml$/",
+            "/helm-charts/charts/.+/values\\.ya?ml$/"
+        ]
+    },
+    "helmv3": {
+        "managerFilePatterns": [
+            "/(^|/)Chart\\.ya?ml$/",
+            "/helm-charts/dependencies-Chart\\.ya?ml$/",
+            "/helm-charts/Chart\\.ya?ml$/",
+            "/helm-charts/charts/.+/Chart\\.ya?ml$/"
+        ]
+    },
+    "packageRules": [
+        {
+            "matchCategories": [
+                "docker"
+            ],
+            "registryUrls": [
+                "https://index.docker.io"
+            ]
+        },
+        {
+            "matchDatasources": [
+                "docker"
+            ],
+            "matchPackageNames": [
+                "/^domboeckli//"
+            ],
+            "versioning": "maven",
+            "allowedVersions": "/^[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?$/",
+            "ignoreUnstable": false,
+            "automerge": false,
+            "automergeType": "pr",
+            "ignoreTests": true
+        },
+        {
+            "matchDatasources": [
+                "docker"
+            ],
+            "matchPackageNames": [
+                "!/^domboeckli//"
+            ],
+            "automerge": false,
+            "automergeType": "pr",
+            "ignoreTests": true
+        }
+    ],
+    "ignoreDeps": [
+        "maven"
+    ],
+    "schedule": [
+        "before 5am"
+    ],
+    "platformAutomerge": false,
+    "dependencyDashboard": true,
+    "prHourlyLimit": 0,
+    "prConcurrentLimit": 0,
+    "baseBranches": [
+        "master"
+    ],
+    "branchPrefix": "feature/renovate-",
+    "separateMinorPatch": true,
+    "separateMajorMinor": true,
+    "automerge": false,
+    "rebaseWhen": "conflicted"
 }

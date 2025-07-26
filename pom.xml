@@ -29,20 +29,26 @@
     
     <properties>
         <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
         <spring-ai.version>1.0.0</spring-ai.version>
 
-        <organization.name>dboeckli</organization.name>
-
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-
         <github.acions.build>false</github.acions.build>
+        <skip.docker.build>false</skip.docker.build>
         <skip.docker.publish>true</skip.docker.publish>
         <skip.start.stop.springboot>false</skip.start.stop.springboot>
+      
+        <docker.image.tag>development</docker.image.tag> <!-- for feature branches -->
+        <docker.repo>local</docker.repo>
 
         <logbook.version>3.12.2</logbook.version>
         <logstash-logback.version>8.1</logstash-logback.version>
+        <editorconfig-maven-plugin.version>0.1.3</editorconfig-maven-plugin.version>
+        <helm.plugin.version>6.17.0</helm.plugin.version>
+        <properties-maven-plugin.version>1.2.1</properties-maven-plugin.version>
+        <merge-yaml-plugin.version>1.4</merge-yaml-plugin.version>
 
         <!-- Sonar -->
         <sonar-maven-plugin.version>5.1.0.4751</sonar-maven-plugin.version>
@@ -95,6 +101,33 @@
             <properties>
                 <github.acions.build>true</github.acions.build>
                 <skip.docker.publish>false</skip.docker.publish>
+                <docker.repo>domboeckli</docker.repo>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>master-branch</id>
+            <activation>
+                <property>
+                    <name>env.GITHUB_REF</name>
+                    <value>refs/heads/master</value>
+                </property>
+            </activation>
+            <properties>
+                <docker.image.tag>latest</docker.image.tag>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>main-branch</id>
+            <activation>
+                <property>
+                    <name>env.GITHUB_REF</name>
+                    <value>refs/heads/main</value>
+                </property>
+            </activation>
+            <properties>
+                <docker.image.tag>latest</docker.image.tag>
             </properties>
         </profile>
     </profiles>
@@ -202,6 +235,248 @@
         </pluginManagement>
 
         <plugins>
+            <plugin>
+                <groupId>org.ec4j.maven</groupId>
+                <artifactId>editorconfig-maven-plugin</artifactId>
+                <version>${editorconfig-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>check-with-editorconfig</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- See http://ec4j.github.io/editorconfig-maven-plugin/ for full configuration reference -->
+                    <excludes>
+                        <!-- Note that maven submodule directories and many non-source file patterns are excluded by default -->
+                        <!-- see https://github.com/ec4j/editorconfig-linters/blob/master/editorconfig-lint-api/src/main/java/org/ec4j/lint/api/Constants.java#L37 -->
+                        <!-- You can exclude further files from processing: -->
+                        <exclude>**/toolchains.xml</exclude>
+                        <exclude>**/settings.xml</exclude>
+                        <exclude>.run/**</exclude>
+                        <exclude>.mvn/**</exclude>
+                        <exclude>.idea/**</exclude>
+                        <exclude>**/banner.txt</exclude>
+                        <exclude>mvnw</exclude>
+                        <exclude>mvnw.cmd</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <message>This build requires at least Java ${java.version},
+                                        update your JVM, and
+                                        run the build again</message>
+                                    <version>${java.version}</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Spring Boot Actuator displays sbom-related information if a CycloneDX SBOM file is
+            present at the classpath -->
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>create-bill-of-materials</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                            <goal>makeBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+            this plugin generates some git properties. We use the "git.commit.id.abbrev" variable which we append
+            to the docker image id for builds in jenkins (docker.application.image.tag). See "jenkins" profile at the top.
+            -->
+            <plugin>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>get-the-git-infos</id>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <verbose>true</verbose>
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                    <commitIdGenerationMode>full</commitIdGenerationMode>
+                    <runOnlyOnce>true</runOnlyOnce>
+                    <skipPoms>false</skipPoms>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-helm-version</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <propertyfile file="${project.build.directory}/helm.properties">
+                                    <entry key="helm.chart.version" value="v${project.version}" />
+                                </propertyfile>
+                                <!--suppress UnresolvedMavenProperty: git.commit.id.abbrev is set by git git-commit-id-maven-plugin -->
+                                <replaceregexp file="${project.build.directory}/helm.properties"
+                                               match="helm\.chart\.version=(v[0-9]+\.[0-9]+\.[0-9]+)_.*-SNAPSHOT"
+                                               replace="helm.chart.version=\1-${git.commit.id.abbrev}"
+                                               byline="true" />
+                                <property file="${project.build.directory}/helm.properties" />
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <phase>test</phase>
+                        <!-- the dependencies-values.yaml has been merge into the values.yaml file. we delete it before the helm plugin is running -->
+                        <id>delete-after-merge</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <delete file="${project.build.directory}/helm-charts/dependencies-values.yaml" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>${properties-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <id>read-helm-properties</id>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>${project.build.directory}/helm.properties</file>
+                            </files>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+
+                    <execution>
+                        <id>copy-and-filter-k8s-yaml-to-target</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/k8s</outputDirectory>
+                            <includeEmptyDirs>true</includeEmptyDirs>
+                            <resources>
+                                <resource>
+                                    <directory>k8s</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>**/*</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+
+                    <!--
+                        This execution copies helm charts and puts them into the target directory 'helm-charts'. The helm charts are used to deploy the project.
+                        During the build some variables are resolved by maven filtering (e.g. the project version).
+                    -->
+                    <execution>
+                        <id>copy-and-filter-helm-charts-to-target</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/helm-charts</outputDirectory>
+                            <includeEmptyDirs>true</includeEmptyDirs>
+                            <resources>
+                                <resource>
+                                    <directory>helm-charts</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>**/*</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                            <filters>
+                                <filter>${project.build.directory}/helm.properties</filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>cd.connect.maven</groupId>
+                <artifactId>merge-yaml-plugin</artifactId>
+                <version>${merge-yaml-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>merge-values-yaml-files</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>mergeYaml</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>${project.build.directory}/helm-charts/values.yaml</file>
+                                <file>${project.build.directory}/helm-charts/dependencies-values.yaml</file>
+                            </files>
+                            <finalYaml>${project.build.directory}/helm-charts/values.yaml</finalYaml>
+                            <flowStyle>BLOCK</flowStyle>
+                            <varSubstitution>MUSTACHE</varSubstitution>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <indentSize>2</indentSize>
+                    <lineLength>180</lineLength>
+                </configuration>
+            </plugin>
+
             <!-- we need a port to be able to start the local profile -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -216,6 +491,7 @@
                         <configuration>
                             <portNames>
                                 <portName>tomcat.http.port</portName>
+                                <portName>jmx.server.port</portName>
                             </portNames>
                         </configuration>
                     </execution>
@@ -277,7 +553,6 @@
                         <id>start-springboot-app</id>
                         <goals>
                             <goal>start</goal>
-                            <goal>stop</goal>
                         </goals>
                         <configuration>
                             <skip>${skip.start.stop.springboot}</skip>
@@ -288,7 +563,20 @@
                                 <argument>-Xmx1024m</argument>
                                 <argument>--server.port=${tomcat.http.port}</argument>
                                 <argument>--spring.cloud.kubernetes.enabled=false</argument>
+                                <argument>--spring.profiles.active=local</argument>
                             </arguments>
+                            <jmxPort>${jmx.server.port}</jmxPort>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>stop-springboot-app</id>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skip.start.stop.springboot}</skip>
+                            <jmxPort>${jmx.server.port}</jmxPort>
                         </configuration>
                     </execution>
 
@@ -299,10 +587,11 @@
                         </goals>
                         <phase>install</phase>
                         <configuration>
+                            <skip>${skip.docker.build}</skip>
                             <image>
-                                <name>local/${project.artifactId}:latest</name>
+                                <name>local/${project.artifactId}:${project.version}</name>
                                 <tags>
-                                    local/${project.artifactId}:${project.version}
+                                    local/${project.artifactId}:${docker.image.tag}
                                 </tags>
                                 <publish>false</publish>
                             </image>
@@ -318,18 +607,17 @@
                         <configuration>
                             <skip>${skip.docker.publish}</skip>
                             <image>
-                                <name>ghcr.io/${project.organization.name}/${project.artifactId}:latest</name>
+                                <name>ghcr.io/${project.organization.name}/${project.artifactId}:${project.version}</name>
                                 <tags>
-                                    ghcr.io/${project.organization.name}/${project.artifactId}:${project.version}
+                                    ghcr.io/${project.organization.name}/${project.artifactId}:${docker.image.tag}
                                 </tags>
                                 <publish>true</publish>
                             </image>
                             <docker>
                                 <publishRegistry>
-                                    <!-- GITHUB_ACTOR and GITHUB_TOKEN are set by gitHub Actions -->
-                                    <!--suppress UnresolvedMavenProperty -->
+                                    <!--suppress UnresolvedMavenProperty: GITHUB_ACTOR is set by GitHub Actions -->
                                     <username>${env.GITHUB_ACTOR}</username>
-                                    <!--suppress UnresolvedMavenProperty -->
+                                    <!--suppress UnresolvedMavenProperty: GITHUB_TOKEN is set by GitHub Actions -->
                                     <password>${env.GITHUB_TOKEN}</password>
                                     <url>https://ghcr.io</url><!-- gitHub packages -->
                                 </publishRegistry>
@@ -346,24 +634,109 @@
                         <configuration>
                             <skip>${skip.docker.publish}</skip>
                             <image>
-                                <!--suppress UnresolvedMavenProperty -->
-                                <name>${env.DOCKER_USER}/${project.artifactId}:latest</name>
+                                <!--suppress UnresolvedMavenProperty: DOCKER_USER is set by GitHub Actions -->
+                                <name>${env.DOCKER_USER}/${project.artifactId}:${project.version}</name>
                                 <tags>
-                                    <!--suppress UnresolvedMavenProperty -->
-                                    ${env.DOCKER_USER}/${project.artifactId}:${project.version}
+                                    <!--suppress UnresolvedMavenProperty: DOCKER_USER is set by GitHub Actions -->
+                                    ${env.DOCKER_USER}/${project.artifactId}:${docker.image.tag}
                                 </tags>
                                 <publish>true</publish>
                             </image>
                             <docker>
                                 <publishRegistry>
-                                    <!-- DOCKER_USER and DOCKER_TOKEN are set by gitHub Actions -->
-                                    <!--suppress UnresolvedMavenProperty -->
+                                    <!--suppress UnresolvedMavenProperty: DOCKER_USER is set by GitHub Actions -->
                                     <username>${env.DOCKER_USER}</username>
-                                    <!--suppress UnresolvedMavenProperty -->
+                                    <!--suppress UnresolvedMavenProperty: DOCKER_TOKEN is set by GitHub Actions -->
                                     <password>${env.DOCKER_TOKEN}</password>
                                     <url>https://index.docker.io/v1/</url>
                                 </publishRegistry>
                             </docker>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.kokuwa.maven</groupId>
+                <artifactId>helm-maven-plugin</artifactId>
+                <version>${helm.plugin.version}</version>
+                <extensions>true</extensions>
+
+                <configuration>
+                    <chartDirectory>${project.build.directory}/helm-charts/</chartDirectory>
+                    <!--suppress UnresolvedMavenProperty: helm.chart.version is set by maven antrun plugin -->
+                    <chartVersion>${helm.chart.version}</chartVersion>
+                    <skipLint>true</skipLint>
+                    <useLocalHelmBinary>true</useLocalHelmBinary>
+                    <skip>false</skip>
+                    <templateOutputDir>${project.build.directory}/helm-templated</templateOutputDir>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>execute-helm-lint</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>lint</goal> <!-- Locally render templates -->
+                        </goals>
+                        <configuration>
+                            <skipLint>false</skipLint>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>execute-helm-template</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>template</goal> <!-- Locally render templates -->
+                        </goals>
+                        <configuration>
+                            <skipTemplate>false</skipTemplate>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>execute-helm-dry-run</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>dry-run</goal> <!-- simulates an install. output goes to target/helm-templated -->
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>helm-package</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>package</goal> <!-- creates tgz file to target/helm -->
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>helm-login</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>registry-login</goal>
+                        </goals>
+                        <configuration>
+                            <uploadRepoStable>
+                                <name>stable-repo</name>
+                                <url>registry-1.docker.io</url>
+                                <!--suppress UnresolvedMavenProperty: DOCKER_USER is set by GitHub Actions -->
+                                <username>${env.DOCKER_USER}</username>  <!-- registry username -->
+                                <!--suppress UnresolvedMavenProperty: DOCKER_TOKEN is set by GitHub Actions -->
+                                <password>${env.DOCKER_TOKEN}</password> <!-- registry password or identity token -->
+                            </uploadRepoStable>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>helm-push</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>push</goal>
+                        </goals>
+                        <configuration>
+                            <skipPushLogin>true</skipPushLogin>
+                            <uploadRepoStable>
+                                <name>stable-repo</name>
+                                <!--suppress UnresolvedMavenProperty: DOCKER_USER is set by GitHub Actions -->
+                                <url>registry-1.docker.io/${env.DOCKER_USER}</url>
+                            </uploadRepoStable>
                         </configuration>
                     </execution>
                 </executions>
@@ -429,32 +802,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!--
-            this plugin generates some git properties. We use the "git.commit.id.abbrev" variable which we append
-            to the docker image id for builds in jenkins (docker.application.image.tag). See "jenkins" profile at the top.
-            -->
-            <plugin>
-                <groupId>io.github.git-commit-id</groupId>
-                <artifactId>git-commit-id-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>get-the-git-infos</id>
-                        <goals>
-                            <goal>revision</goal>
-                        </goals>
-                        <phase>initialize</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <verbose>true</verbose>
-                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
-                    <commitIdGenerationMode>full</commitIdGenerationMode>
-                    <runOnlyOnce>true</runOnlyOnce>
-                    <skipPoms>false</skipPoms>
-                </configuration>
             </plugin>
 
         </plugins>
