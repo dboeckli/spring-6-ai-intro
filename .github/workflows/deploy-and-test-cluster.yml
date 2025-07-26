@@ -52,10 +52,20 @@ jobs:
         env:
           HELM_CHART_VERSION: ${{ inputs.helm-chart-version }}
           DOCKER_USER: ${{ vars.DOCKER_USER }}
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
           APPLICATION_NAME: ${{ inputs.application-name }}
         run: |
+          # Check if required parameters are set
+          required_params=("DOCKER_USER" "DOCKER_ACCESS_TOKEN")
+          for param in "${required_params[@]}"; do
+            if [ -z "${!param}" ]; then
+              echo "::error::Required parameter $param is not set"
+              exit 1
+            fi
+          done
+          
           echo "Logging in to Docker Hub"
-          echo "$DOCKER_PASSWORD" | helm registry login -u "$DOCKER_USER" --password-stdin registry-1.docker.io
+          echo "$DOCKER_ACCESS_TOKEN" | helm registry login -u "$DOCKER_USER" --password-stdin registry-1.docker.io
           
           echo "Pulling Helm Chart Version: $HELM_CHART_VERSION from oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME"
           helm pull oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME --version "$HELM_CHART_VERSION"
