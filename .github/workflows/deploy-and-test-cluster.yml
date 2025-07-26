@@ -76,6 +76,7 @@ jobs:
         env:
           DOCKER_USER: ${{ vars.DOCKER_USER }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          NAMESPACE: ${{ inputs.namespace }}
         run: |
           set -o pipefail
           set -o nounset
@@ -98,8 +99,21 @@ jobs:
             }
           }
           EOF
+          
+          # Kind Cluster konfigurieren
+          kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic docker-config \
+            --from-file=.dockerconfigjson=$HOME/.docker/config.json \
+            --type=kubernetes.io/dockerconfigjson \
+            -n ${NAMESPACE} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Default ServiceAccount patchen
+          kubectl patch serviceaccount default \
+            -p '{"imagePullSecrets": [{"name": "docker-config"}]}' \
+            -n ${NAMESPACE}
 
-          echo "✅ Docker authentication configured"    
+          echo "✅ Docker authentication configured"
 
       - name: Deploy application with Helm
         env:
