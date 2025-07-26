@@ -386,9 +386,7 @@ jobs:
 
     steps:
       - name: Trigger Deployment
-        #if: success()  # This ensures the step only runs if all previous steps were successful
-        # TODO: ENABLE ME
-        if: false
+        if: success()  # This ensures the step only runs if all previous steps were successful
         env:
           GH_TOKEN: ${{ secrets.TRIGGER_WORKFLOW_TOKEN }}
           BRANCH_MVN_VERSION: ${{needs.setup.outputs.BRANCH_MVN_VERSION}}
