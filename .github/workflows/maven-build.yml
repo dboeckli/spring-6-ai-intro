@@ -213,7 +213,7 @@ jobs:
           set -o errexit     # abort on nonzero exit status
           
           # Check if required parameters are set
-          required_params=("GITHUB_ACTOR" "GITHUB_TOKEN" "OPENAI_API_KEY)
+          required_params=("GITHUB_ACTOR" "GITHUB_TOKEN" "OPENAI_API_KEY")
           for param in "${required_params[@]}"; do
             if [ -z "${!param}" ]; then
               echo "::error::Required parameter $param is not set"
