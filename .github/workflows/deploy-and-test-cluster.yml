@@ -52,11 +52,68 @@ jobs:
         env:
           HELM_CHART_VERSION: ${{ inputs.helm-chart-version }}
           DOCKER_USER: ${{ vars.DOCKER_USER }}
+          DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
           APPLICATION_NAME: ${{ inputs.application-name }}
         run: |
+          # Check if required parameters are set
+          required_params=("DOCKER_USER" "DOCKER_ACCESS_TOKEN")
+          for param in "${required_params[@]}"; do
+            if [ -z "${!param}" ]; then
+              echo "::error::Required parameter $param is not set"
+              exit 1
+            fi
+          done
+          
+          echo "Logging in to Docker Hub"
+          echo "$DOCKER_ACCESS_TOKEN" | helm registry login -u "$DOCKER_USER" --password-stdin registry-1.docker.io
+          
           echo "Pulling Helm Chart Version: $HELM_CHART_VERSION from oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME"
           helm pull oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME --version "$HELM_CHART_VERSION"
           tar -xvf $APPLICATION_NAME-v*.tgz  
+          
+
+      - name: Configure Docker Authentication
+        env:
+          DOCKER_USER: ${{ vars.DOCKER_USER }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          NAMESPACE: ${{ inputs.namespace }}
+        run: |
+          set -o pipefail
+          set -o nounset
+          set -o errexit
+
+          # Auth-Token erstellen
+          AUTH=$(echo -n "$DOCKER_USER:$DOCKER_TOKEN" | base64)
+
+          # Docker Konfiguration erstellen
+          mkdir -p ~/.docker
+          cat > ~/.docker/config.json <<EOF
+          {
+            "auths": {
+              "https://index.docker.io/v1/": {
+                "auth": "$AUTH"
+              },
+              "registry-1.docker.io": {
+                "auth": "$AUTH"
+              }
+            }
+          }
+          EOF
+          
+          # Kind Cluster konfigurieren
+          kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic docker-config \
+            --from-file=.dockerconfigjson=$HOME/.docker/config.json \
+            --type=kubernetes.io/dockerconfigjson \
+            -n ${NAMESPACE} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Default ServiceAccount patchen
+          kubectl patch serviceaccount default \
+            -p '{"imagePullSecrets": [{"name": "docker-config"}]}' \
+            -n ${NAMESPACE}
+
+          echo "✅ Docker authentication configured"
 
       - name: Deploy application with Helm
         env:
@@ -71,11 +128,17 @@ jobs:
             exit 1
           fi
           
+          # Verify if OPENAI_API_KEY is base64 encoded
+          if echo "$OPENAI_API_KEY" | base64 -d > /dev/null 2>&1; then
+            echo "::error::OPENAI_API_KEY is base64 encoded. Aborting deployment."
+            exit 1
+          fi
+          
           # Install/upgrade the Helm chart
           echo "Deploying Application $APPLICATION_NAME: $APP_VERSION"
           helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME \
           --set image.tag=${APP_VERSION} \
-          --set openai.apiKey="${{ secrets.OPENAI_API_KEY }}" \
+          --set openai.apiKey="${OPENAI_API_KEY}" \
           --namespace ${NAMESPACE} \
           --create-namespace \
           --cleanup-on-fail \

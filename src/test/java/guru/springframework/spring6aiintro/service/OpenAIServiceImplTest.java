@@ -4,10 +4,18 @@ import guru.springframework.spring6aiintro.dto.Answer;
 import guru.springframework.spring6aiintro.dto.GetCapitalDetailsResponse;
 import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
 import guru.springframework.spring6aiintro.dto.GetCapitalResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -17,10 +25,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @ActiveProfiles("local")
+@Slf4j
 class OpenAIServiceImplTest {
     
     @Autowired
     OpenAIService openAIService;
+
+    @BeforeAll
+    static void setup() throws IOException {
+        Path envFile = Paths.get(".run", ".openapi-key-env");
+        if (Files.exists(envFile)) {
+            List<String> lines = Files.readAllLines(envFile);
+            for (String line : lines) {
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    System.setProperty(parts[0], parts[1]);
+                }
+            }
+        } else {
+            log.info("Warning: .openapi-key-env file not found. Ensure it exists or set OPENAI_API_KEY manually.");
+        }
+    }
 
     @Test
     void testGetAnswer() {
