@@ -73,6 +73,7 @@ jobs:
           
 
       - name: Configure Docker Authentication
+        if: false
         env:
           DOCKER_USER: ${{ vars.DOCKER_USER }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
