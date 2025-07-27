@@ -9,7 +9,7 @@ $APPLICATION_NAME = Get-ChildItem -Directory |
 
 # Prompt for required values
 $OPENAI_API_KEY = Read-Host "Enter your OpenAI API Key (OPENAI_API_KEY)" -AsSecureString
-$DOCKER_USER = domboeckli
+$DOCKER_USER = "domboeckli"
 $DOCKER_TOKEN = Read-Host "Enter your Docker token (DOCKER_TOKEN)" -AsSecureString
 
 # Convert SecureString to plain text for use in command
