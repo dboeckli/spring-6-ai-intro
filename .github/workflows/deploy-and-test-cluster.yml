@@ -73,6 +73,8 @@ jobs:
           
 
       - name: Configure Docker Authentication
+        # TODO: DELETE OR ENABLE ME
+        if: false
         env:
           DOCKER_USER: ${{ vars.DOCKER_USER }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
@@ -121,6 +123,8 @@ jobs:
           APPLICATION_NAME: ${{ inputs.application-name }}
           NAMESPACE: ${{ inputs.namespace }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DOCKER_USER: ${{ vars.DOCKER_USER }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
         run: |
           # Check if OPENAI_API_KEY is empty
           if [ -z "$OPENAI_API_KEY" ]; then
@@ -139,6 +143,8 @@ jobs:
           helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME \
           --set image.tag=${APP_VERSION} \
           --set openai.apiKey="${OPENAI_API_KEY}" \
+          --set docker.dockerUser="${DOCKER_USER}" \
+          --set docker.dockerToken="${DOCKER_TOKEN}" \
           --namespace ${NAMESPACE} \
           --create-namespace \
           --cleanup-on-fail \

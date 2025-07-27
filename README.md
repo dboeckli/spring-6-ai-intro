@@ -1,6 +1,7 @@
 # Introduction to Spring AI
 
 This repository contains source code examples for Spring AI.
+This project uses private Docker repositories and GitHub, requiring specific deployment configurations for secure access and management.
 
 Application runs on port 8080
 

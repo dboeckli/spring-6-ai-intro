@@ -57,3 +57,9 @@ Create the FQDN for the service
 {{- $fullname := include "application-template.fullname" . -}}
 {{- printf "%s.%s.svc.cluster.local" $fullname .Release.Namespace }}
 {{- end }}
+
+{{- define "application-template.imagePullSecret" }}
+{{- with .Values.docker }}
+{{- printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"auth\":\"%s\"}}}" .registry .dockerUser .dockerToken (printf "%s:%s" .dockerUser .dockerToken | b64enc) | b64enc }}
+{{- end }}
+{{- end }}
