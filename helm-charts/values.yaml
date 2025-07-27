@@ -46,5 +46,14 @@ probes:
 openai:
   apiKey: ""  # Leer lassen, wird über --set oder values.yaml override gesetzt
 
+docker:
+  dockerUser: "" # Leer lassen, wird über --set oder values.yaml override gesetzt
+  dockerToken: "" # Leer lassen, wird über --set oder values.yaml override gesetzt
+  registrySecretName: docker-registry-secret
+
+serviceAccount:
+  create: false
+  name: spring-6-ai-intro-service-account
+
 ingress:
   enabled: false
