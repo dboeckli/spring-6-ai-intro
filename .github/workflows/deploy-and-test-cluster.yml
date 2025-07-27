@@ -81,10 +81,10 @@ jobs:
           set -o pipefail
           set -o nounset
           set -o errexit
-
+          
           # Auth-Token erstellen
           AUTH=$(echo -n "$DOCKER_USER:$DOCKER_TOKEN" | base64)
-
+          
           # Docker Konfiguration erstellen
           mkdir -p ~/.docker
           cat > ~/.docker/config.json <<EOF
@@ -102,18 +102,19 @@ jobs:
           
           # Kind Cluster konfigurieren
           kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
-          kubectl create secret generic docker-config \
+          kubectl create secret generic docker-registry-secret \
             --from-file=.dockerconfigjson=$HOME/.docker/config.json \
             --type=kubernetes.io/dockerconfigjson \
             -n ${NAMESPACE} \
             --dry-run=client -o yaml | kubectl apply -f -
           
-          # Default ServiceAccount patchen
+          # ServiceAccount-Patch anpassen
           kubectl patch serviceaccount default \
-            -p '{"imagePullSecrets": [{"name": "docker-config"}]}' \
+            -p '{"imagePullSecrets": [{"name": "docker-registry-secret"}]}' \
             -n ${NAMESPACE}
-
+          
           echo "✅ Docker authentication configured"
+      
 
       - name: Deploy application with Helm
         env:
