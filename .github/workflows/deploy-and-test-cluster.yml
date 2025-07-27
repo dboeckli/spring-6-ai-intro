@@ -143,6 +143,7 @@ jobs:
           --set openai.apiKey="${OPENAI_API_KEY}" \
           --set docker.dockerUser="${DOCKER_USER}" \
           --set docker.dockerToken="${DOCKER_TOKEN}" \
+          --set serviceAccount.create=true \
           --namespace ${NAMESPACE} \
           --create-namespace \
           --cleanup-on-fail \
