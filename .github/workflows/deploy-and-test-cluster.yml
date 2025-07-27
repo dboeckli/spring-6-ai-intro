@@ -102,11 +102,6 @@ jobs:
           
           # Kind Cluster konfigurieren
           kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
-          kubectl create secret generic docker-registry-secret \
-            --from-file=.dockerconfigjson=$HOME/.docker/config.json \
-            --type=kubernetes.io/dockerconfigjson \
-            -n ${NAMESPACE} \
-            --dry-run=client -o yaml | kubectl apply -f -
           
           # ServiceAccount-Patch anpassen
           kubectl patch serviceaccount default \
