@@ -126,11 +126,14 @@ jobs:
           DOCKER_USER: ${{ vars.DOCKER_USER }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
         run: |
-          # Check if OPENAI_API_KEY is empty
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "::error::OPENAI_API_KEY is empty. Aborting deployment."
-            exit 1
-          fi
+          # Check if required parameters are set
+          required_params=("OPENAI_API_KEY" "DOCKER_USER" "DOCKER_TOKEN")
+          for param in "${required_params[@]}"; do
+            if [ -z "${!param}" ]; then
+              echo "::error::Required parameter $param is not set"
+              exit 1
+            fi
+          done
           
           # Verify if OPENAI_API_KEY is base64 encoded
           if echo "$OPENAI_API_KEY" | base64 -d > /dev/null 2>&1; then
