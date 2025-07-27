@@ -73,8 +73,6 @@ jobs:
           
 
       - name: Configure Docker Authentication
-        # TODO: DELETE OR ENABLE ME
-        if: false
         env:
           DOCKER_USER: ${{ vars.DOCKER_USER }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
