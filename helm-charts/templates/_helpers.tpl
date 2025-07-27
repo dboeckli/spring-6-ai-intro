@@ -60,6 +60,6 @@ Create the FQDN for the service
 
 {{- define "application-template.imagePullSecret" }}
 {{- with .Values.docker }}
-{{- printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"auth\":\"%s\"}}}" .registry .dockerUser .dockerToken (printf "%s:%s" .dockerUser .dockerToken | b64enc) | b64enc }}
+{{- printf "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"%s\",\"password\":\"%s\",\"auth\":\"%s\"}}}" .dockerUser .dockerToken (printf "%s:%s" .dockerUser .dockerToken | b64enc) | b64enc }}
 {{- end }}
 {{- end }}
