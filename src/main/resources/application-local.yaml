@@ -2,9 +2,6 @@ spring:
   application:
     name: spring-6-ai-intro
 
-  #config:
-  #  import: optional:file:.openapi-key-env
-    
   ai:
     openai:
       #Pass API key as environment variable, e.g. -DOPENAI_API_KEY=your-api-key
@@ -14,6 +11,17 @@ spring:
         api-key: ${OPENAI_API_KEY}
         options:
           model: gpt-4o
+    chat:
+      client:
+        enabled: true
+        observations:
+          # Enable prompt logging at ChatClient level
+          log-prompt: true
+      observations:
+        # Enable AI response logging
+        log-completion: true
+        # Enable error logging for troubleshooting
+        include-error-logging: true
           
 management:
   health:
@@ -26,10 +34,33 @@ management:
       exposure:
         include: "*"
   endpoint:
+    configprops:
+      # WARNING: SECURITY RISK - DO NOT USE IN PRODUCTION ENVIRONMENT
+      # This configuration exposes sensitive data and should only be used for development or testing purposes.
+      # Ensure this is disabled in any environment where security is a concern.
+      show-values: ALWAYS
     health:
       probes:
         enabled: true
       show-details: always
+    prometheus:
+      access: unrestricted
+    metrics:
+      access: unrestricted
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    enable:
+      all: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+
 
 logbook:
   filter:
@@ -45,4 +76,10 @@ logbook:
       - password
   predicate:
     exclude:
-      - path: /actuator/health/**            
+      # Exclude HTML-related calls and specific endpoints that Logbook doesn't handle correctly
+      - path: /actuator/health/**
+      - path: /h2-console/**  # Exclude H2 console
+      - path: /swagger-ui/**  # Exclude Swagger UI if used
+      - path: /v3/api-docs/** # Exclude OpenAPI docs if used
+      - path: /favicon.ico
+      # Add more exclusions as needed

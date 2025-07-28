@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
 @Slf4j
-class ActuatorInfoTest {
+class ActuatorInfoIT {
 
     @Autowired
     private MockMvc mockMvc;

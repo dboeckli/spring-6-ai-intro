@@ -1,0 +1,55 @@
+package guru.springframework.spring6aiintro.service;
+
+import guru.springframework.spring6aiintro.dto.chat.ChatRequest;
+import guru.springframework.spring6aiintro.dto.chat.ChatResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.stereotype.Service;
+
+@Service
+@Slf4j
+public class ChatClientServiceImpl implements ChatClientService {
+
+    private final ChatClient chatClient;
+
+    private final String SYSTEM_PROMPT = getSystemPrompt();
+
+    public ChatClientServiceImpl(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
+    }
+
+    @Override
+    public ChatResponse processMessage(ChatRequest chatRequest) {
+        log.info("🎯 Processing customer support request");
+
+        try {
+            // Send the user's message to the AI model via OpenRouter
+            String content = chatClient.prompt().system(SYSTEM_PROMPT).user(chatRequest.message())  // Set the user's message
+                .call()                       // Make the API call
+                .content();                   // Extract the response content
+
+            log.info("✅ Support response generated with full observability");
+            return new ChatResponse(content);
+
+        } catch (Exception e) {
+            // Log the error for debugging while providing user-friendly response
+            log.error("❌ Error processing message: " + e.getMessage());
+            return new ChatResponse("I apologize for the technical difficulty. Please try again in a moment.");
+        }
+    }
+
+    private String getSystemPrompt() {
+        return """
+            You are a helpful customer support assistant.
+            
+            Your responsibilities:
+            - Answer product questions and provide specifications
+            - Help troubleshoot technical issues step-by-step
+            - Assist with account and billing inquiries
+            - Provide clear, concise, and professional responses
+            
+            If you cannot resolve an issue completely, guide the customer
+            to contact human support with specific next steps.
+            """;
+    }
+}

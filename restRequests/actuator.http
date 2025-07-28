@@ -6,6 +6,14 @@ Accept: application/json
 GET http://localhost:{{application-port}}/actuator/info
 Accept: application/json
 
+### Get Prometheus Metrics
+GET http://localhost:{{application-port}}/actuator/prometheus
+Accept: application/openmetrics-text;version=1.0.0;charset=utf-8
+
+### Get Prometheus Metrics
+GET http://localhost:{{application-port}}/actuator/prometheus
+Accept: text/plain;version=0.0.4;charset=utf-8
+
 ### actuator health
 GET http://localhost:{{application-port}}/actuator/health
 Accept: application/json
@@ -19,24 +27,49 @@ GET http://localhost:{{application-port}}/actuator/health/liveness
 Accept: application/json
 
 ### actuator metrics
-GET localhost:{{application-port}}/actuator/metrics
+GET http://localhost:{{application-port}}/actuator/metrics
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:{{application-port}}/actuator/metrics/http.client.requests
+Accept: application/json
+
+# the ai metrics is only avaialable after the chat client has been called once. make sure to call the chat client first.
+### actuator ai metrics
+GET http://localhost:{{application-port}}/actuator/metrics/spring.ai.chat.client
+Accept: application/json
+
+### actuator ai metrics
+GET http://localhost:{{application-port}}/actuator/metrics/spring.ai.chat.client.active
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:{{application-port}}/actuator/metrics/gen_ai.client.operation
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:{{application-port}}/actuator/metrics/gen_ai.client.operation.active
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:{{application-port}}/actuator/metrics/gen_ai.client.token.usage
 Accept: application/json
 
 ### actuator env
-GET localhost:{{application-port}}/actuator/env
+GET http://localhost:{{application-port}}/actuator/env
 Accept: application/json
 
 ### actuator env
-GET localhost:{{application-port}}/actuator/configprops
+GET http://localhost:{{application-port}}/actuator/configprops
 Accept: application/json
 
 ### actuator beans
-GET localhost:{{application-port}}/actuator/beans
+GET http://localhost:{{application-port}}/actuator/beans
 Accept: application/json
 
 ### actuator caches
-GET localhost:{{application-port}}/actuator/caches
+GET http://localhost:{{application-port}}/actuator/caches
 Accept: application/json
 
 ### actuator get loggers
-GET localhost:{{application-port}}/actuator/loggers
+GET http://localhost:{{application-port}}/actuator/loggers
