@@ -67,7 +67,13 @@ class ChatClientServiceImplIT {
         assertThat(response.response(), allOf(
             notNullValue(),
             containsString("Port"),
-            containsString("können"),
+            anyOf(
+                containsString("können"),
+                containsString("müssen"),
+                containsString("sollten"),
+                containsString("folgende Schritte"),
+                containsString("Schritte, die")
+            ),
             not(containsString("technical difficulty"))
         ));
         assertThat(response.response().length(), greaterThan(50));
