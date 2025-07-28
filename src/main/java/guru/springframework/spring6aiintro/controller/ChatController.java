@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/chat")
 public class ChatController {
 
-    private final ChatClientService chatService;
+    private final ChatClientService chatClientService;
 
     /**
      * Handle customer support chat requests
@@ -28,9 +28,16 @@ public class ChatController {
         log.info("📞 Incoming customer support request");
 
         // Process the message through our service
-        ChatResponse chatResponse = chatService.processMessage(chatRequest);
+        ChatResponse chatResponse = chatClientService.processMessage(chatRequest);
 
         log.info("📋 Support response delivered");
         return ResponseEntity.ok(chatResponse);
     }
+
+    @PostMapping("/quick")
+    public ResponseEntity<ChatResponse> sendQuickQuery(@RequestBody ChatRequest chatRequest) {
+        log.debug("⚡ Quick query received: {}", chatRequest.message());
+        return ResponseEntity.ok(chatClientService.processSimpleQuery(chatRequest));
+    }
+
 }

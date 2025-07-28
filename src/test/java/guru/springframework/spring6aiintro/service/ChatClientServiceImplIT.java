@@ -113,5 +113,16 @@ class ChatClientServiceImplIT {
         assertThat(response.response().length(), greaterThan(50));
     }
 
+    @Test
+    void testQuickQuery() {
+        ChatRequest request = new ChatRequest("2+2?");
+        ChatResponse response = chatClientService.processSimpleQuery(request);
 
+        assertThat(response.response(), allOf(
+            notNullValue(),
+            containsString("4")
+        ));
+        // Erwarte sehr kurze Antwort
+        assertThat(response.response().length(), both(greaterThan(0)).and(lessThan(10)));
+    }
 }

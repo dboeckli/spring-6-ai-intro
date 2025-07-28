@@ -38,6 +38,22 @@ public class ChatClientServiceImpl implements ChatClientService {
         }
     }
 
+    public ChatResponse processSimpleQuery(ChatRequest chatRequest) {
+        log.info("📝 Processing simple query");
+        try {
+            String content = chatClient.prompt()
+                .system("Answer briefly in the same language as the question. No greetings or explanations.")
+                .user(chatRequest.message())
+                .call()
+                .content();
+            return new ChatResponse(content);
+        } catch (Exception e) {
+            log.error("❌ Error: " + e.getMessage());
+            return new ChatResponse("Error occurred.");
+        }
+    }
+
+
     private String getSystemPrompt() {
         return """
         You are a helpful customer support assistant.

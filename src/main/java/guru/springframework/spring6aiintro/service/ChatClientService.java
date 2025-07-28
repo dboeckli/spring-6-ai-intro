@@ -7,4 +7,6 @@ public interface ChatClientService {
 
     ChatResponse processMessage(ChatRequest chatRequest);
 
+    ChatResponse processSimpleQuery(ChatRequest chatRequest);
+
 }
