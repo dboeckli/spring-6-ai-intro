@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @ActiveProfiles("local")
 @Slf4j
-class OpenAIServiceImplTest {
+class OpenAIServiceImplIT {
     
     @Autowired
     OpenAIService openAIService;

@@ -5,8 +5,28 @@ This project uses private Docker repositories and GitHub, requiring specific dep
 
 Application runs on port 8080
 
-* https://platform.openai.com/settings/organization/billing/overview
-* https://platform.openai.com/settings/organization/api-keys
+## 1. OpenAI Platform and Monitoring
+
+### 1.1 Important URLs
+- Main Platform: https://platform.openai.com/
+- API Usage and Consumption: https://platform.openai.com/usage
+- Billing Details: https://platform.openai.com/billing/overview
+- API Keys: https://platform.openai.com/api-keys
+
+### 1.2 Monitoring Information
+#### Usage Dashboard
+- Current consumption
+- Historical usage
+- Model-specific breakdown
+- Cost estimates
+
+#### Billing Dashboard
+- Current balance
+- Payment history
+- Subscription details
+- Usage limits
+
+### 1.3 API Key Configuration
 The Openai key (OPENAI_API_KEY) has been placed as environment variable in:
 * Junit
 * Maven
@@ -15,11 +35,10 @@ The Openai key (OPENAI_API_KEY) has been placed as environment variable in:
   File: [.run/.openapi-key-env](.run/.openapi-key-env)
 
 For local development you need to set:
-Den OPENAI_API_KEY in der Windows Anmeldeinformation als Generische Anmeldeinformation setzen:
-- Internet oder Netzwerkadresse: OPENAI_API_KEY
-- Benutzername: OPENAI_API_KEY
-- Kennwort: key aus dem keypass
-
+Set the OPENAI_API_KEY in Windows Credentials as Generic Credential:
+- Internet or network address: OPENAI_API_KEY
+- Username: OPENAI_API_KEY
+- Password: key from keypass
 
 ## Deployment with Helm
 

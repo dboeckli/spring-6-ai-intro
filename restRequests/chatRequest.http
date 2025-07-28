@@ -1,0 +1,8 @@
+###
+POST http://localhost:{{application-port}}/api/chat/message
+Accept: application/json
+Content-Type: application/json
+
+{
+    "message": "Ich habe Probleme beim Login in meinem Konto. Nach der Eingabe meines Passworts erhalte ich eine Fehlermeldung. Wie kann ich dieses Problem lösen?"
+}
