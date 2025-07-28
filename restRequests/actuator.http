@@ -47,12 +47,32 @@ Accept: application/json
 GET http://localhost:{{application-port}}/actuator/metrics/gen_ai.client.operation
 Accept: application/json
 
+### actuator metrics token usage
+GET http://localhost:{{application-port}}/actuator/metrics/gen_ai.client.token.usage
+Accept: application/json
+
 ### actuator metrics
 GET http://localhost:{{application-port}}/actuator/metrics/gen_ai.client.operation.active
 Accept: application/json
 
 ### actuator metrics
 GET http://localhost:{{application-port}}/actuator/metrics/gen_ai.client.token.usage
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:8080/actuator/metrics/gen_ai.client.token.usage?tag=gen_ai.token.type:input
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:8080/actuator/metrics/gen_ai.client.token.usage?tag=gen_ai.token.type:output
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:8080/actuator/metrics/gen_ai.client.token.usage?tag=gen_ai.token.type:total
+Accept: application/json
+
+### actuator metrics
+GET http://localhost:8080/actuator/metrics/gen_ai.client.operation
 Accept: application/json
 
 ### actuator env
