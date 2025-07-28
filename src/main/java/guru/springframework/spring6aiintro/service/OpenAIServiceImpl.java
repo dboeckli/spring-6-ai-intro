@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6aiintro.dto.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class OpenAIServiceImpl implements OpenAIService {
     
@@ -40,11 +42,6 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Value("classpath:templates/get-capital-with-info-with-parser.st")
     private Resource getCapitalDetailsWithParser;
 
-    public OpenAIServiceImpl(ChatModel chatModel, ObjectMapper objectMapper) {
-        this.chatModel = chatModel;
-        this.objectMapper = objectMapper;
-    }
-    
     @Override
     public String getAnswer(String question) {
         PromptTemplate promptTemplate = new PromptTemplate(question);

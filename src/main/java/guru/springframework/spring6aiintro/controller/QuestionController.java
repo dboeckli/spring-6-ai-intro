@@ -2,13 +2,13 @@ package guru.springframework.spring6aiintro.controller;
 
 import guru.springframework.spring6aiintro.dto.*;
 import guru.springframework.spring6aiintro.service.OpenAIService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class QuestionController {
 
     private final OpenAIService openAIService;

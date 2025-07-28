@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
@@ -68,6 +69,7 @@ public class AITokenUsageIT {
         double totalAfter = getTokenUsage("total");
         double tokensUsed = totalAfter - totalBefore;
 
+        assertEquals(0.0, totalBefore);
         assertThat(response.response(), containsString("2"));
         assertThat(tokensUsed, greaterThan(1.0));
 

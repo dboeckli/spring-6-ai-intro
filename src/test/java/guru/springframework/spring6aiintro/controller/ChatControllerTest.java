@@ -10,7 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.http.ResponseEntity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -32,7 +33,7 @@ class ChatControllerTest {
     }
 
     @Test
-    void sendMessage() {
+    void testSendMessage() {
         // Given
         ChatRequest chatRequest = new ChatRequest("test message");
         ChatResponse expectedResponse = new ChatResponse("test response");
@@ -45,6 +46,22 @@ class ChatControllerTest {
             () -> assertEquals(200, responseEntity.getStatusCode().value(), "HTTP Status sollte 200 OK sein"),
             () -> assertEquals(expectedResponse, responseEntity.getBody(), "Response Body sollte übereinstimmen"),
             () -> verify(chatService).processMessage(chatRequest)
+        );
+    }
+
+    @Test
+    void testSendQuickQuery() {
+        ChatRequest chatRequest = new ChatRequest("1+1?");
+        ChatResponse expectedResponse = new ChatResponse("2");
+        when(chatService.processSimpleQuery(chatRequest)).thenReturn(expectedResponse);
+
+        // When
+        ResponseEntity<ChatResponse> responseEntity = chatController.sendQuickQuery(chatRequest);
+
+        assertAll("Chat Response Validation",
+            () -> assertEquals(200, responseEntity.getStatusCode().value()),
+            () -> assertEquals(expectedResponse, responseEntity.getBody()),
+            () -> verify(chatService).processSimpleQuery(chatRequest)
         );
     }
 
