@@ -12,7 +12,7 @@ public class ChatClientServiceImpl implements ChatClientService {
 
     private final ChatClient chatClient;
 
-    private final String SYSTEM_PROMPT = getSystemPrompt();
+    private static final String SYSTEM_PROMPT = getSystemPrompt();
 
     public ChatClientServiceImpl(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
@@ -54,7 +54,7 @@ public class ChatClientServiceImpl implements ChatClientService {
     }
 
 
-    private String getSystemPrompt() {
+    private static String getSystemPrompt() {
         return """
         You are a helpful customer support assistant.
         
