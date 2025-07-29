@@ -1,5 +1,6 @@
 package guru.springframework.spring6aiintro.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
 import guru.springframework.spring6aiintro.service.ChatClientService;
@@ -64,6 +65,42 @@ class ChatControllerTest {
             () -> verify(chatService).processSimpleQuery(chatClientRequest)
         );
     }
+
+    @Test
+    void checkAi_Success() throws JsonProcessingException {
+        // Given
+        String expectedResponse = "AI System ist betriebsbereit";
+        when(chatService.checkAi()).thenReturn(expectedResponse);
+
+        // When
+        ResponseEntity<String> responseEntity = chatController.checkAi();
+
+        // Then
+        assertAll("AI Check Erfolgsfall",
+            () -> assertEquals(200, responseEntity.getStatusCode().value(), "HTTP Status sollte 200 OK sein"),
+            () -> assertEquals(expectedResponse, responseEntity.getBody(), "Response Body sollte übereinstimmen"),
+            () -> verify(chatService).checkAi()
+        );
+    }
+
+    @Test
+    void checkAi_HandlesException() throws JsonProcessingException {
+        // Given
+        String errorMessage = "JSON Verarbeitungsfehler";
+        when(chatService.checkAi()).thenThrow(new JsonProcessingException(errorMessage) {});
+
+        // When
+        ResponseEntity<String> responseEntity = chatController.checkAi();
+
+        // Then
+        assertAll("AI Check Fehlerfall",
+            () -> assertEquals(500, responseEntity.getStatusCode().value(), "HTTP Status sollte 500 sein"),
+            () -> assertEquals("Error processing AI check: " + errorMessage, responseEntity.getBody(),
+                "Fehlermeldung sollte korrekt formatiert sein"),
+            () -> verify(chatService).checkAi()
+        );
+    }
+
 
 
 }
