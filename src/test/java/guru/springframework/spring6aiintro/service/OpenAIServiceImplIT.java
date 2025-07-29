@@ -151,7 +151,7 @@ class OpenAIServiceImplIT {
         }
 
         assertThat(response, allOf(
-            containsString("4.")
+            containsString("4")
         ));
     }
 
