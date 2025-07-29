@@ -3,8 +3,6 @@ package guru.springframework.spring6aiintro.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import guru.springframework.spring6aiintro.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -142,25 +139,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         String input = "2+2=?";
         Prompt promptObj = new Prompt(new UserMessage(input));
         promptObj.getInstructions().forEach(m -> log.info("role={}, text={}", m.getMessageType(), m.getText()));
-        ChatResponse chatResponse =  chatModel.call(promptObj);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
-        Map<String, Object> jsonOutput = new LinkedHashMap<>();
-
-        jsonOutput.put("model", chatResponse.getMetadata().getModel());
-        jsonOutput.put("usage", chatResponse.getMetadata().getUsage());
-        jsonOutput.put("rateLimit", chatResponse.getMetadata().getRateLimit());
-
-        jsonOutput.put("promptMetadata", chatResponse.getMetadata().getPromptMetadata());
-
-        jsonOutput.put("resultMetadata", chatResponse.getResult().getMetadata());
-        jsonOutput.put("input", input);
-        jsonOutput.put("result", chatResponse.getResult().getOutput().getText());
-
-        return objectMapper.writeValueAsString(jsonOutput);
+        ChatResponse chatResponse = chatModel.call(promptObj);
+        return AiResponseFormatter.formatAiCheckResponse(chatResponse, input);
     }
 }
