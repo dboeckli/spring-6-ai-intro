@@ -1,7 +1,7 @@
 package guru.springframework.spring6aiintro.controller;
 
-import guru.springframework.spring6aiintro.dto.chat.ChatRequest;
-import guru.springframework.spring6aiintro.dto.chat.ChatResponse;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
 import guru.springframework.spring6aiintro.service.ChatClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,33 +35,33 @@ class ChatControllerTest {
     @Test
     void testSendMessage() {
         // Given
-        ChatRequest chatRequest = new ChatRequest("test message");
-        ChatResponse expectedResponse = new ChatResponse("test response");
-        when(chatService.processMessage(chatRequest)).thenReturn(expectedResponse);
+        ChatClientRequest chatClientRequest = new ChatClientRequest("test message");
+        ChatClientResponse expectedResponse = new ChatClientResponse("test response");
+        when(chatService.processMessage(chatClientRequest)).thenReturn(expectedResponse);
 
         // When
-        ResponseEntity<ChatResponse> responseEntity = chatController.sendMessage(chatRequest);
+        ResponseEntity<ChatClientResponse> responseEntity = chatController.sendMessage(chatClientRequest);
 
         assertAll("Chat Response Validation",
             () -> assertEquals(200, responseEntity.getStatusCode().value(), "HTTP Status sollte 200 OK sein"),
             () -> assertEquals(expectedResponse, responseEntity.getBody(), "Response Body sollte übereinstimmen"),
-            () -> verify(chatService).processMessage(chatRequest)
+            () -> verify(chatService).processMessage(chatClientRequest)
         );
     }
 
     @Test
     void testSendQuickQuery() {
-        ChatRequest chatRequest = new ChatRequest("1+1?");
-        ChatResponse expectedResponse = new ChatResponse("2");
-        when(chatService.processSimpleQuery(chatRequest)).thenReturn(expectedResponse);
+        ChatClientRequest chatClientRequest = new ChatClientRequest("1+1?");
+        ChatClientResponse expectedResponse = new ChatClientResponse("2");
+        when(chatService.processSimpleQuery(chatClientRequest)).thenReturn(expectedResponse);
 
         // When
-        ResponseEntity<ChatResponse> responseEntity = chatController.sendQuickQuery(chatRequest);
+        ResponseEntity<ChatClientResponse> responseEntity = chatController.sendQuickQuery(chatClientRequest);
 
         assertAll("Chat Response Validation",
             () -> assertEquals(200, responseEntity.getStatusCode().value()),
             () -> assertEquals(expectedResponse, responseEntity.getBody()),
-            () -> verify(chatService).processSimpleQuery(chatRequest)
+            () -> verify(chatService).processSimpleQuery(chatClientRequest)
         );
     }
 

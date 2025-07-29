@@ -1,15 +1,13 @@
 package guru.springframework.spring6aiintro.controller;
 
-import guru.springframework.spring6aiintro.dto.chat.ChatRequest;
-import guru.springframework.spring6aiintro.dto.chat.ChatResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
 import guru.springframework.spring6aiintro.service.ChatClientService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Slf4j
@@ -24,20 +22,30 @@ public class ChatController {
      * Each request triggers complete observability pipeline
      */
     @PostMapping("/message")
-    public ResponseEntity<ChatResponse> sendMessage(@RequestBody ChatRequest chatRequest) {
+    public ResponseEntity<ChatClientResponse> sendMessage(@RequestBody ChatClientRequest chatClientRequest) {
         log.info("📞 Incoming customer support request");
 
         // Process the message through our service
-        ChatResponse chatResponse = chatClientService.processMessage(chatRequest);
+        ChatClientResponse chatClientResponse = chatClientService.processMessage(chatClientRequest);
 
         log.info("📋 Support response delivered");
-        return ResponseEntity.ok(chatResponse);
+        return ResponseEntity.ok(chatClientResponse);
     }
 
     @PostMapping("/quick")
-    public ResponseEntity<ChatResponse> sendQuickQuery(@RequestBody ChatRequest chatRequest) {
-        log.debug("⚡ Quick query received: {}", chatRequest.message());
-        return ResponseEntity.ok(chatClientService.processSimpleQuery(chatRequest));
+    public ResponseEntity<ChatClientResponse> sendQuickQuery(@RequestBody ChatClientRequest chatClientRequest) {
+        log.info("⚡ Quick query received: {}", chatClientRequest.message());
+        return ResponseEntity.ok(chatClientService.processSimpleQuery(chatClientRequest));
+    }
+
+    @GetMapping("/check-ai")
+    public ResponseEntity<String> checkAi() {
+        try {
+            String result = chatClientService.checkAi();
+            return ResponseEntity.ok(result);
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.internalServerError().body("Error processing AI check: " + e.getMessage());
+        }
     }
 
 }

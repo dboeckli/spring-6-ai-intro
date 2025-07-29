@@ -1,10 +1,18 @@
 package guru.springframework.spring6aiintro.service;
 
-import guru.springframework.spring6aiintro.dto.chat.ChatRequest;
-import guru.springframework.spring6aiintro.dto.chat.ChatResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Service;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -12,50 +20,7 @@ public class ChatClientServiceImpl implements ChatClientService {
 
     private final ChatClient chatClient;
 
-    private static final String SYSTEM_PROMPT = getSystemPrompt();
-
-    public ChatClientServiceImpl(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
-    }
-
-    @Override
-    public ChatResponse processMessage(ChatRequest chatRequest) {
-        log.info("🎯 Processing customer support request");
-
-        try {
-            // Send the user's message to the AI model via OpenRouter
-            String content = chatClient.prompt().system(SYSTEM_PROMPT).user(chatRequest.message())  // Set the user's message
-                .call()                       // Make the API call
-                .content();                   // Extract the response content
-
-            log.info("✅ Support response generated with full observability");
-            return new ChatResponse(content);
-
-        } catch (Exception e) {
-            // Log the error for debugging while providing user-friendly response
-            log.error("❌ Error processing message: " + e.getMessage());
-            return new ChatResponse("I apologize for the technical difficulty. Please try again in a moment.");
-        }
-    }
-
-    public ChatResponse processSimpleQuery(ChatRequest chatRequest) {
-        log.info("📝 Processing simple query");
-        try {
-            String content = chatClient.prompt()
-                .system("Answer briefly in the same language as the question. No greetings or explanations.")
-                .user(chatRequest.message())
-                .call()
-                .content();
-            return new ChatResponse(content);
-        } catch (Exception e) {
-            log.error("❌ Error: " + e.getMessage());
-            return new ChatResponse("Error occurred.");
-        }
-    }
-
-
-    private static String getSystemPrompt() {
-        return """
+    private static final String SYSTEM_PROMPT = """
         You are a helpful customer support assistant.
         
         Your responsibilities:
@@ -82,5 +47,72 @@ public class ChatClientServiceImpl implements ChatClientService {
         to contact human support with specific next steps.
         """;
 
+    public ChatClientServiceImpl(ChatClient.Builder chatClientBuilder) {
+        this.chatClient = chatClientBuilder.build();
+    }
+
+    @Override
+    public ChatClientResponse processMessage(ChatClientRequest chatClientRequest) {
+        log.info("🎯 Processing customer support request");
+
+        try {
+            // Send the user's message to the AI model via OpenRouter
+            String content = chatClient.prompt().system(SYSTEM_PROMPT).user(chatClientRequest.message())
+                .call()
+                .content();
+
+            log.info("✅ Support response generated with full observability");
+            return new ChatClientResponse(content);
+
+        } catch (Exception e) {
+            // Log the error for debugging while providing user-friendly response
+            log.error("❌ Error processing message: " + e.getMessage());
+            return new ChatClientResponse("I apologize for the technical difficulty. Please try again in a moment.");
+        }
+    }
+
+    @Override
+    public ChatClientResponse processSimpleQuery(ChatClientRequest chatClientRequest) {
+        log.info("📝 Processing simple query");
+        try {
+            String content = chatClient.prompt()
+                .system("Answer briefly in the same language as the question. No greetings or explanations.")
+                .user(chatClientRequest.message())
+                .call()
+                .content();
+            return new ChatClientResponse(content);
+        } catch (Exception e) {
+            log.error("❌ Error: " + e.getMessage());
+            return new ChatClientResponse("Error occurred.");
+        }
+    }
+
+    @Override
+    public String checkAi() throws JsonProcessingException {
+        String input = "2+2=?";
+
+        ChatResponse chatResponse = chatClient.prompt()
+            .user(input)
+            .call()
+            .chatResponse();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        Map<String, Object> jsonOutput = new LinkedHashMap<>();
+
+        jsonOutput.put("model", chatResponse.getMetadata().getModel());
+        jsonOutput.put("usage", chatResponse.getMetadata().getUsage());
+        jsonOutput.put("rateLimit", chatResponse.getMetadata().getRateLimit());
+
+        jsonOutput.put("promptMetadata", chatResponse.getMetadata().getPromptMetadata());
+
+        jsonOutput.put("resultMetadata", chatResponse.getResult().getMetadata());
+        jsonOutput.put("input", input);
+        jsonOutput.put("result", chatResponse.getResult().getOutput().getText());
+
+        return objectMapper.writeValueAsString(jsonOutput);
     }
 }
