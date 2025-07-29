@@ -18,9 +18,11 @@ public class Spring6AiIntroApplication {
     @Bean
     public CommandLineRunner runAiQuery(OpenAIService openAIService) {
         return args -> {
+            log.info("Starting AI check at startup...");
             String jsonString = openAIService.checkAi();
             log.info("AI Response at Startup:");
             log.info(jsonString);
+            log.info("AI check completed successfully.");
         };
     }
 
