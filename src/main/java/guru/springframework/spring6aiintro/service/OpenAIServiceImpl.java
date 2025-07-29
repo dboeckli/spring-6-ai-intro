@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+import static guru.springframework.spring6aiintro.service.AiResponseFormatter.INPUT_CHECK_AI;
+
 
 @Service
 @RequiredArgsConstructor
@@ -136,7 +138,7 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     @Override
     public String checkAi() throws JsonProcessingException {
-        String input = "2+2=?";
+        String input = INPUT_CHECK_AI;
         Prompt promptObj = new Prompt(new UserMessage(input));
         promptObj.getInstructions().forEach(m -> log.info("role={}, text={}", m.getMessageType(), m.getText()));
         ChatResponse chatResponse = chatModel.call(promptObj);
