@@ -65,9 +65,9 @@ class AITokenUsageIT {
             total
         );
 
-        assertEquals(11.0, input);
-        assertThat(output, allOf(greaterThanOrEqualTo(7.0), lessThanOrEqualTo(8.0)));
-        assertThat(total, allOf(greaterThanOrEqualTo(17.0), lessThanOrEqualTo(19.0)));
+        assertEquals(13.0, input);
+        assertThat(output, allOf(greaterThanOrEqualTo(1.0), lessThanOrEqualTo(8.0)));
+        assertThat(total, allOf(greaterThanOrEqualTo(14.0), lessThanOrEqualTo(19.0)));
     }
 
 

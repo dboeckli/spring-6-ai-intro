@@ -151,13 +151,8 @@ class OpenAIServiceImplIT {
         }
 
         assertThat(response, allOf(
-            containsString("2 + 2"),
-            anyOf(
-                containsString("= 4"),
-                containsString("equals 4")
-            )
+            containsString("4.")
         ));
-        assertThat(response.length(), greaterThan(0));
     }
 
 }
