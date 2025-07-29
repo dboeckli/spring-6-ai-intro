@@ -1,5 +1,8 @@
 package guru.springframework.spring6aiintro.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +20,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 
 @SpringBootTest
@@ -124,5 +128,34 @@ class ChatClientServiceImplIT {
         ));
         // Erwarte sehr kurze Antwort
         assertThat(response.response().length(), both(greaterThan(0)).and(lessThan(10)));
+    }
+
+    @Test
+    void testCheckAi() {
+        String response = assertDoesNotThrow(() -> chatClientService.checkAi());
+        assertThat(response, allOf(
+            notNullValue(),
+            not(emptyString())
+        ));
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(response);
+
+            if (jsonNode.isObject() && jsonNode.has("result")) {
+                response = jsonNode.get("result").asText();
+            }
+        } catch (JsonProcessingException e) {
+            log.info("Response is not a valid JSON. Treating it as a plain string.");
+        }
+
+        assertThat(response, allOf(
+            containsString("2 + 2"),
+            anyOf(
+                containsString("= 4"),
+                containsString("equals 4")
+            )
+        ));
+        assertThat(response.length(), greaterThan(0));
     }
 }
