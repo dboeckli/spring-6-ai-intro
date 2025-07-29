@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6aiintro.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -42,6 +43,8 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Value("classpath:templates/get-capital-with-info-with-parser.st")
     private Resource getCapitalDetailsWithParser;
 
+    private static final String CAPITAL_REQUEST_KEY = "stateOrCountry";
+
     @Override
     public String getAnswer(String question) {
         PromptTemplate promptTemplate = new PromptTemplate(question);
@@ -61,7 +64,7 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Override
     public Answer getCapital(GetCapitalRequest getCapitalRequest) {
         PromptTemplate promptTemplate = new PromptTemplate(getCapitalPrompt);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName()));
+        Prompt prompt = promptTemplate.create(Map.of(CAPITAL_REQUEST_KEY, getCapitalRequest.countryName()));
         ChatResponse response = chatModel.call(prompt);
 
         return new Answer(response.getResult().getOutput().getText());
@@ -70,7 +73,7 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Override
     public Answer getCapitalWithInfo(GetCapitalRequest getCapitalRequest) {
         PromptTemplate promptTemplate = new PromptTemplate(getCapitalPromptWithInfo);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName()));
+        Prompt prompt = promptTemplate.create(Map.of(CAPITAL_REQUEST_KEY, getCapitalRequest.countryName()));
         ChatResponse response = chatModel.call(prompt);
 
         return new Answer(response.getResult().getOutput().getText());
@@ -84,7 +87,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         log.info("Json Format: " + format);
 
         PromptTemplate promptTemplate = new PromptTemplate(getCapitalDetailsWithParser);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName(), "format", format));
+        Prompt prompt = promptTemplate.create(Map.of(CAPITAL_REQUEST_KEY, getCapitalRequest.countryName(), "format", format));
 
         ChatResponse response = chatModel.call(prompt);
         return converter.convert(response.getResult().getOutput().getText());
@@ -93,7 +96,7 @@ public class OpenAIServiceImpl implements OpenAIService {
     @Override
     public Answer getCapitalAsJson(GetCapitalRequest getCapitalRequest) {
         PromptTemplate promptTemplate = new PromptTemplate(getCapitalPromptInJson);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName()));
+        Prompt prompt = promptTemplate.create(Map.of(CAPITAL_REQUEST_KEY, getCapitalRequest.countryName()));
         ChatResponse response = chatModel.call(prompt);
 
         log.info("Response: " + response.getResult().getOutput().getText());
@@ -118,9 +121,25 @@ public class OpenAIServiceImpl implements OpenAIService {
         log.info("Json Format: " + format);
         
         PromptTemplate promptTemplate = new PromptTemplate(getCapitalWithParser);
-        Prompt prompt = promptTemplate.create(Map.of("stateOrCountry", getCapitalRequest.countryName(), "format", format));
+        Prompt prompt = promptTemplate.create(Map.of(CAPITAL_REQUEST_KEY, getCapitalRequest.countryName(), "format", format));
 
         ChatResponse response = chatModel.call(prompt);
         return converter.convert(response.getResult().getOutput().getText());
+    }
+
+    @Override
+    public ChatResponse getRawResponse(String prompt) {
+        Prompt promptObj = new Prompt(new UserMessage(prompt));
+        promptObj.getInstructions().forEach(m -> log.info("role={}, text={}", m.getMessageType(), m.getText()));
+        return chatModel.call(promptObj);
+    }
+
+    @Override
+    public String checkAi() throws JsonProcessingException {
+        String input = "2+2=?";
+        Prompt promptObj = new Prompt(new UserMessage(input));
+        promptObj.getInstructions().forEach(m -> log.info("role={}, text={}", m.getMessageType(), m.getText()));
+        ChatResponse chatResponse = chatModel.call(promptObj);
+        return AiResponseFormatter.formatAiCheckResponse(chatResponse, input);
     }
 }

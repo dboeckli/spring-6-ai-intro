@@ -1,7 +1,10 @@
 package guru.springframework.spring6aiintro.service;
 
-import guru.springframework.spring6aiintro.dto.chat.ChatRequest;
-import guru.springframework.spring6aiintro.dto.chat.ChatResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
+import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 
 @SpringBootTest
@@ -45,8 +49,8 @@ class ChatClientServiceImplIT {
 
     @Test
     void testProcessSimpleQuestion() {
-        ChatRequest request = new ChatRequest("Was sind Ihre Öffnungszeiten?");
-        ChatResponse response = chatClientService.processMessage(request);
+        ChatClientRequest request = new ChatClientRequest("Was sind Ihre Öffnungszeiten?");
+        ChatClientResponse response = chatClientService.processMessage(request);
 
         assertThat(response.response(), allOf(
             notNullValue(),
@@ -59,10 +63,10 @@ class ChatClientServiceImplIT {
 
     @Test
     void testProcessTechnicalSupport() {
-        ChatRequest request = new ChatRequest(
+        ChatClientRequest request = new ChatClientRequest(
             "Meine Anwendung startet nicht. Beim Start erscheint die Fehlermeldung 'Port bereits in Verwendung'. Was kann ich tun?"
         );
-        ChatResponse response = chatClientService.processMessage(request);
+        ChatClientResponse response = chatClientService.processMessage(request);
 
         assertThat(response.response(), allOf(
             notNullValue(),
@@ -81,11 +85,11 @@ class ChatClientServiceImplIT {
 
     @Test
     void testProcessComplexInquiry() {
-        ChatRequest request = new ChatRequest(
+        ChatClientRequest request = new ChatClientRequest(
             "Ich möchte meine Datenbank von MySQL auf PostgreSQL migrieren. " +
                 "Welche Schritte sind notwendig und worauf muss ich besonders achten?"
         );
-        ChatResponse response = chatClientService.processMessage(request);
+        ChatClientResponse response = chatClientService.processMessage(request);
 
         assertThat(response.response(), allOf(
             notNullValue(),
@@ -99,10 +103,10 @@ class ChatClientServiceImplIT {
 
     @Test
     void testProcessMultilingualSupport() {
-        ChatRequest request = new ChatRequest(
+        ChatClientRequest request = new ChatClientRequest(
             "How can I configure my application.properties for database connection?"
         );
-        ChatResponse response = chatClientService.processMessage(request);
+        ChatClientResponse response = chatClientService.processMessage(request);
 
         assertThat(response.response(), allOf(
             notNullValue(),
@@ -115,8 +119,8 @@ class ChatClientServiceImplIT {
 
     @Test
     void testQuickQuery() {
-        ChatRequest request = new ChatRequest("2+2?");
-        ChatResponse response = chatClientService.processSimpleQuery(request);
+        ChatClientRequest request = new ChatClientRequest("2+2?");
+        ChatClientResponse response = chatClientService.processSimpleQuery(request);
 
         assertThat(response.response(), allOf(
             notNullValue(),
@@ -124,5 +128,34 @@ class ChatClientServiceImplIT {
         ));
         // Erwarte sehr kurze Antwort
         assertThat(response.response().length(), both(greaterThan(0)).and(lessThan(10)));
+    }
+
+    @Test
+    void testCheckAi() {
+        String response = assertDoesNotThrow(() -> chatClientService.checkAi());
+        assertThat(response, allOf(
+            notNullValue(),
+            not(emptyString())
+        ));
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(response);
+
+            if (jsonNode.isObject() && jsonNode.has("result")) {
+                response = jsonNode.get("result").asText();
+            }
+        } catch (JsonProcessingException e) {
+            log.info("Response is not a valid JSON. Treating it as a plain string.");
+        }
+
+        assertThat(response, allOf(
+            containsString("2 + 2"),
+            anyOf(
+                containsString("= 4"),
+                containsString("equals 4")
+            )
+        ));
+        assertThat(response.length(), greaterThan(0));
     }
 }

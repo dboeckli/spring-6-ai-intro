@@ -1,4 +1,8 @@
 ###
+GET http://localhost:{{application-port}}/api/chat/check-ai
+Accept: application/json
+
+###
 POST http://localhost:{{application-port}}/api/chat/message
 Accept: application/json
 Content-Type: application/json

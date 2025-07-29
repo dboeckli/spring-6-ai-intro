@@ -3,7 +3,10 @@
 This repository contains source code examples for Spring AI.
 This project uses private Docker repositories and GitHub, requiring specific deployment configurations for secure access and management.
 
-Application runs on port 8080
+Application runs on port 8080/30080
+
+## AI Test Prompts
+A collection of AI test prompts can be found in the [AI-Test.md](AI-Test.md) file. These prompts were developed by Mathew Berman to test and evaluate the capabilities of different AI models.
 
 ## 1. OpenAI Platform and Monitoring
 

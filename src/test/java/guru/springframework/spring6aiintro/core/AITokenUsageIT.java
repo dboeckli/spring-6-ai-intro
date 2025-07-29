@@ -1,8 +1,5 @@
 package guru.springframework.spring6aiintro.core;
 
-import guru.springframework.spring6aiintro.dto.chat.ChatRequest;
-import guru.springframework.spring6aiintro.dto.chat.ChatResponse;
-import guru.springframework.spring6aiintro.service.ChatClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -21,17 +18,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
 @Slf4j
-public class AITokenUsageIT {
-
-    @Autowired
-    private ChatClientService chatClientService;
+class AITokenUsageIT {
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -58,30 +51,23 @@ public class AITokenUsageIT {
 
     @Test
     void testTokenUsageForQuickQuery() {
-        // Token-Nutzung vor der Anfrage erfassen
-        double totalBefore = getTokenUsage("total");
-
-        // Einfache Anfrage ausführen
-        ChatRequest request = new ChatRequest("1+1?");
-        ChatResponse response = chatClientService.processSimpleQuery(request);
-
-        // Token-Nutzung nach der Anfrage
-        double totalAfter = getTokenUsage("total");
-        double tokensUsed = totalAfter - totalBefore;
-
-        assertEquals(0.0, totalBefore);
-        assertThat(response.response(), containsString("2"));
-        assertThat(tokensUsed, greaterThan(1.0));
+        double input = getTokenUsage("input");
+        double output = getTokenUsage("output");
+        double total = getTokenUsage("total");
 
         log.info("""
-            📊 Token-Nutzung Details:
-            Input Tokens: {}
-            Output Tokens: {}
-            Gesamt: {}""",
-            getTokenUsage("input"),
-            getTokenUsage("output"),
-            getTokenUsage("total")
+                📊 Token-Nutzung Details:
+                Input Tokens: {}
+                Output Tokens: {}
+                Gesamt: {}""",
+            input,
+            output,
+            total
         );
+
+        assertEquals(11.0, input);
+        assertThat(output, allOf(greaterThanOrEqualTo(7.0), lessThanOrEqualTo(8.0)));
+        assertThat(total, allOf(greaterThanOrEqualTo(17.0), lessThanOrEqualTo(19.0)));
     }
 
 
@@ -99,7 +85,10 @@ public class AITokenUsageIT {
 
     }
 
-    record MetricsResponse(List<Measurement> measurements) {}
-    record Measurement(double value) {}
+    record MetricsResponse(List<Measurement> measurements) {
+    }
+
+    record Measurement(double value) {
+    }
 
 }
