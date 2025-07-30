@@ -65,9 +65,15 @@ class AITokenUsageIT {
             total
         );
 
-        assertEquals(13.0, input);
-        assertThat(output, allOf(greaterThanOrEqualTo(1.0), lessThanOrEqualTo(8.0)));
-        assertThat(total, allOf(greaterThanOrEqualTo(14.0), lessThanOrEqualTo(19.0)));
+        double expectedInput = 13.0;
+        double expectedMinOutput = 1.0;
+        double expectedMaxOutput = 8.0;
+        double expectedMinTotal = expectedInput + expectedMinOutput;
+        double expectedMaxTotal = expectedInput + expectedMaxOutput;
+
+        assertEquals(expectedInput, input);
+        assertThat(output, allOf(greaterThanOrEqualTo(expectedMinOutput), lessThanOrEqualTo(expectedMaxOutput)));
+        assertThat(total, allOf(greaterThanOrEqualTo(expectedMinTotal), lessThanOrEqualTo(expectedMaxTotal)));
     }
 
 

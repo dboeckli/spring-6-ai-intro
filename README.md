@@ -13,7 +13,7 @@ A collection of AI test prompts can be found in the [AI-Test.md](AI-Test.md) fil
 ### 1.1 Important URLs
 - Main Platform: https://platform.openai.com/
 - API Usage and Consumption: https://platform.openai.com/usage
-- Billing Details: https://platform.openai.com/billing/overview
+- Billing Details: https://platform.openai.com/settings/organization/billing/overview
 - API Keys: https://platform.openai.com/api-keys
 
 ### 1.2 Monitoring Information
