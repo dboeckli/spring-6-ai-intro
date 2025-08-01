@@ -12,7 +12,7 @@ import java.util.List;
 @Slf4j
 public class OpenApiKeyExtension implements BeforeAllCallback {
 
-    public static final String OPEN_API_KEY_NAME = "OPEN_API_KEY";
+    public static final String OPEN_API_KEY_NAME = "OPENAI_API_KEY";
 
     public static final String OPEN_API_ENV_FILE = ".run/.openapi-key-env";
 
