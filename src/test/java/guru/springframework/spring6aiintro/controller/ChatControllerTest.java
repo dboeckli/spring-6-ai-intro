@@ -1,15 +1,21 @@
 package guru.springframework.spring6aiintro.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
+import guru.springframework.spring6aiintro.dto.check.Conversation;
 import guru.springframework.spring6aiintro.service.ChatClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -67,40 +73,29 @@ class ChatControllerTest {
     }
 
     @Test
-    void checkAi_Success() throws JsonProcessingException {
+    void checkAi_Success() {
         // Given
-        String expectedResponse = "AI System ist betriebsbereit";
-        when(chatService.checkAi()).thenReturn(expectedResponse);
+        String expectedResponse = "AI is working";
+        AssistantMessage expectedAssistantMessage = new AssistantMessage(expectedResponse);
+        ChatResponse exptectedChatResponse = new ChatResponse(List.of(new Generation(expectedAssistantMessage)));
+
+        Conversation expectedConversation = new Conversation(null , exptectedChatResponse);
+        when(chatService.checkAi()).thenReturn(expectedConversation);
 
         // When
-        ResponseEntity<String> responseEntity = chatController.checkAi();
+        ResponseEntity<Conversation> responseEntity = chatController.checkAi();
+        Assertions.assertNotNull(responseEntity.getBody());
+        String responseText = responseEntity.getBody()
+            .chatResponse()
+            .getResult()
+            .getOutput()
+            .getText();
 
         // Then
         assertAll("AI Check Erfolgsfall",
-            () -> assertEquals(200, responseEntity.getStatusCode().value(), "HTTP Status sollte 200 OK sein"),
-            () -> assertEquals(expectedResponse, responseEntity.getBody(), "Response Body sollte übereinstimmen"),
+            () -> assertEquals(200, responseEntity.getStatusCode().value()),
+            () -> assertEquals(expectedResponse, responseText),
             () -> verify(chatService).checkAi()
         );
     }
-
-    @Test
-    void checkAi_HandlesException() throws JsonProcessingException {
-        // Given
-        String errorMessage = "JSON Verarbeitungsfehler";
-        when(chatService.checkAi()).thenThrow(new JsonProcessingException(errorMessage) {});
-
-        // When
-        ResponseEntity<String> responseEntity = chatController.checkAi();
-
-        // Then
-        assertAll("AI Check Fehlerfall",
-            () -> assertEquals(500, responseEntity.getStatusCode().value(), "HTTP Status sollte 500 sein"),
-            () -> assertEquals("Error processing AI check: " + errorMessage, responseEntity.getBody(),
-                "Fehlermeldung sollte korrekt formatiert sein"),
-            () -> verify(chatService).checkAi()
-        );
-    }
-
-
-
 }

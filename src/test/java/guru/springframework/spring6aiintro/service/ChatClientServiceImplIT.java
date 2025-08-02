@@ -1,10 +1,8 @@
 package guru.springframework.spring6aiintro.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientRequest;
 import guru.springframework.spring6aiintro.dto.chat.ChatClientResponse;
+import guru.springframework.spring6aiintro.dto.check.Conversation;
 import guru.springframework.spring6aiintro.test.config.OpenApiKeyExtension;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -16,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
 @SpringBootTest
@@ -112,24 +111,11 @@ class ChatClientServiceImplIT {
 
     @Test
     void testCheckAi() {
-        String response = assertDoesNotThrow(() -> chatClientService.checkAi());
-        assertThat(response, allOf(
-            notNullValue(),
-            not(emptyString())
-        ));
+        Conversation conversation = assertDoesNotThrow(() -> chatClientService.checkAi());
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(response);
+        assertNotNull(conversation);
 
-            if (jsonNode.isObject() && jsonNode.has("result")) {
-                response = jsonNode.get("result").asText();
-            }
-        } catch (JsonProcessingException e) {
-            log.info("Response is not a valid JSON. Treating it as a plain string.");
-        }
-
-        assertThat(response, allOf(
+        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(
             containsString("4")
         ));
     }
