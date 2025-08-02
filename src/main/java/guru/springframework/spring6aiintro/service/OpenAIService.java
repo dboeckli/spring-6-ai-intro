@@ -1,7 +1,7 @@
 package guru.springframework.spring6aiintro.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import guru.springframework.spring6aiintro.dto.*;
+import guru.springframework.spring6aiintro.dto.check.Conversation;
 import org.springframework.ai.chat.model.ChatResponse;
 
 public interface OpenAIService {
@@ -22,6 +22,6 @@ public interface OpenAIService {
 
     ChatResponse getRawResponse(String prompt);
 
-    String checkAi() throws JsonProcessingException;
+    Conversation checkAi();
 
 }

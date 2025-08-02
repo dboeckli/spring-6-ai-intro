@@ -1,7 +1,6 @@
 package guru.springframework.spring6aiintro.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -9,9 +8,9 @@ import guru.springframework.spring6aiintro.dto.Answer;
 import guru.springframework.spring6aiintro.dto.GetCapitalDetailsResponse;
 import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
 import guru.springframework.spring6aiintro.dto.GetCapitalResponse;
+import guru.springframework.spring6aiintro.dto.check.Conversation;
 import guru.springframework.spring6aiintro.test.config.OpenApiKeyExtension;
 import lombok.extern.slf4j.Slf4j;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -26,8 +25,7 @@ import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
@@ -114,24 +112,10 @@ class OpenAIServiceImplIT {
 
     @Test
     void testCheckAi() {
-        String response = assertDoesNotThrow(() -> openAIService.checkAi());
-        assertThat(response, allOf(
-            Matchers.notNullValue(),
-            not(emptyString())
-        ));
+        Conversation conversation = assertDoesNotThrow(() -> openAIService.checkAi());
+        assertNotNull(conversation);
 
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(response);
-
-            if (jsonNode.isObject() && jsonNode.has("result")) {
-                response = jsonNode.get("result").asText();
-            }
-        } catch (JsonProcessingException e) {
-            log.info("Response is not a valid JSON. Treating it as a plain string.");
-        }
-
-        assertThat(response, allOf(
+        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(
             containsString("4")
         ));
     }
