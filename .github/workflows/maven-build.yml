@@ -8,7 +8,8 @@ on:
   pull_request:
     branches: [ "main", "master" ]
   schedule:
-    - cron: '5 2 * * *' # daily at 2:05
+    # weekly build every Monday at 2:00 PM (UTC)
+    - cron: '5 2 * * 1'
 jobs:
 
   setup:
