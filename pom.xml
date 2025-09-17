@@ -33,7 +33,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
-        <spring-ai.version>1.0.1</spring-ai.version>
+        <spring-ai.version>1.0.2</spring-ai.version>
 
         <github.acions.build>false</github.acions.build>
         <skip.docker.build>false</skip.docker.build>
