@@ -56,7 +56,7 @@
         <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
         <sonar.language>java</sonar.language>
         <sonar.scm.provider>git</sonar.scm.provider>
-        <jacoco.version>0.8.13</jacoco.version>
+        <jacoco.version>0.8.14</jacoco.version>
     </properties>
 
     <repositories>
