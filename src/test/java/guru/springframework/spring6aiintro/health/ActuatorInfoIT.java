@@ -1,18 +1,19 @@
-package guru.springframework.spring6aiintro.core;
+package guru.springframework.spring6aiintro.health;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6aiintro.test.config.OpenApiKeyExtension;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,6 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DirtiesContext
 @SpringBootTest
 @AutoConfigureMockMvc
+@AutoConfigureRestTestClient
+@AutoConfigureMetrics
 @ActiveProfiles("local")
 @ExtendWith(OpenApiKeyExtension.class)
 @Slf4j
@@ -51,12 +54,17 @@ class ActuatorInfoIT {
 
     @Test
     void actuatorHealthTest() throws Exception {
-        MvcResult result = mockMvc.perform(get("/actuator/health/readiness"))
+        mockMvc.perform(get("/actuator/health/readiness"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.status").value("UP"))
-            .andReturn();
+            .andDo(result -> log.info("Response (pretty):\n{}", pretty(result.getResponse().getContentAsString())))
+            .andExpect(jsonPath("$.status").value("UP"));
+    }
 
-        log.info("Response: {}", result.getResponse().getContentAsString());
+    @Test
+    void actuatorPrometheusTest() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus"))
+            .andExpect(status().isOk())
+            .andDo(result -> log.info("Response:\n{}", result.getResponse().getContentAsString()));
     }
 
     private String pretty(String body) {
