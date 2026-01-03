@@ -16,9 +16,15 @@ updates:
     schedule:
       interval: daily
     registries:
-      - maven-dboeckli  
+      - maven-dboeckli
     ignore:
+      # Wir bleiben bewusst auf Spring Boot 3.x, weil Spring AI (aktuell) noch nicht Spring Boot 4 unterstützt.
+      # Siehe: https://docs.spring.io/spring-ai/reference/getting-started.html
+      # Daher blockieren wir Major-Upgrades (3.x -> 4.x) für den Parent, erlauben aber weiterhin 3.x Minor/Patch-Updates.
       - dependency-name: org.apache.maven:*
+      - dependency-name: org.springframework.boot:spring-boot-starter-parent
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
