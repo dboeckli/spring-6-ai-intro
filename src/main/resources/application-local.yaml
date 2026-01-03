@@ -30,6 +30,8 @@ management:
     livenessstate:
       enabled: true
   endpoints:
+    access:
+      default: unrestricted
     web:
       exposure:
         include: "*"
@@ -43,22 +45,6 @@ management:
       probes:
         enabled: true
       show-details: always
-    prometheus:
-      access: unrestricted
-    metrics:
-      access: unrestricted
-  metrics:
-    tags:
-      application: ${spring.application.name}
-    enable:
-      all: true
-    distribution:
-      percentiles-histogram:
-        http.server.requests: true
-  prometheus:
-    metrics:
-      export:
-        enabled: true
   info:
     build:
       enabled: true
@@ -71,27 +57,22 @@ management:
     git:
       enabled: true
       mode: full
+  httpexchanges:
+    recording:
+      enabled: true
+      include: request_headers, response_headers, session_id, time_taken
+  observations:
+    annotations:
+      enabled: true
+    http:
+      server:
+        requests:
+          name: http.server.requests
+      client:
+        requests:
+          name: http-client-requests
 
-
-
-logbook:
-  filter:
-    enabled: true
-  format:
-    style: http
-  obfuscate:
-    headers:
-      - Authorization
-      - X-Secret
-    parameters:
-      - access_token
-      - password
-  predicate:
-    exclude:
-      # Exclude HTML-related calls and specific endpoints that Logbook doesn't handle correctly
-      - path: /actuator/health/**
-      - path: /h2-console/**  # Exclude H2 console
-      - path: /swagger-ui/**  # Exclude Swagger UI if used
-      - path: /v3/api-docs/** # Exclude OpenAPI docs if used
-      - path: /favicon.ico
-      # Add more exclusions as needed
+  simple:
+    metrics:
+      export:
+        enabled: false
