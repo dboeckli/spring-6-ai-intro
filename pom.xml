@@ -43,7 +43,6 @@
         <docker.image.tag>development</docker.image.tag> <!-- for feature branches -->
         <docker.repo>local</docker.repo>
 
-        <logbook.version>3.12.3</logbook.version>
         <logstash-logback.version>9.0</logstash-logback.version>
         <editorconfig-maven-plugin.version>0.1.17</editorconfig-maven-plugin.version>
         <helm.plugin.version>6.17.0</helm.plugin.version>
@@ -160,16 +159,6 @@
             <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>logbook-spring-boot-starter</artifactId>
-            <version>${logbook.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>logbook-logstash</artifactId>
-            <version>${logbook.version}</version>
-        </dependency>
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
@@ -311,7 +300,6 @@
                         <id>create-bill-of-materials</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>makeAggregateBom</goal>
                             <goal>makeBom</goal>
                         </goals>
                     </execution>
