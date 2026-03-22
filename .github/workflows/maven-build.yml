@@ -3,7 +3,7 @@ run-name: >
   ${{ github.workflow }}: ${{ github.event_name }} for ${{ github.ref_name }} by @${{ github.actor }}
 
 env:
-  JAVA_VERSION: 21
+  JAVA_VERSION: 25
 
 on:
   push:
