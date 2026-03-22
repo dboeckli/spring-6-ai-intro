@@ -1,4 +1,4 @@
-package guru.springframework.spring6aiintro.core;
+package guru.springframework.spring6aiintro.token;
 
 import guru.springframework.spring6aiintro.test.config.OpenApiKeyExtension;
 import lombok.extern.slf4j.Slf4j;
