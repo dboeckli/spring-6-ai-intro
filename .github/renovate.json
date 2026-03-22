@@ -4,12 +4,26 @@
         "mergeConfidence:all-badges",
         "config:recommended"
     ],
+    "ignorePresets": [
+        "workarounds:javaLTSVersions"
+    ],
+    "customDatasources": {
+        "custom_java": {
+            "defaultRegistryUrlTemplate": "https://api.adoptium.net/v3/info/available_releases",
+            "format": "json",
+            "transformTemplates": [
+                "{ \"releases\": $map(available_lts_releases, function($v) { { \"version\": $string($v) } }) }"
+            ]
+        }
+    },
     "enabledManagers": [
-        "docker-compose",
+        "maven",
         "maven-wrapper",
+        "docker-compose",
         "kubernetes",
         "helm-values",
-        "helmv3"
+        "helmv3",
+        "custom.regex"
     ],
     "maven-wrapper": {
         "managerFilePatterns": [
@@ -25,26 +39,27 @@
     "kubernetes": {
         "managerFilePatterns": [
             "/k8s/.+\\.ya?ml$/",
-            "/helm-charts/.+\\.ya?ml$/"
+            "/helm-charts/templates/.+\\.ya?ml$/"
         ]
     },
     "helm-values": {
         "managerFilePatterns": [
-            "/helm-charts/values\\.ya?ml$/",
-            "/helm-charts/dependencies-values\\.ya?ml$/",
-            "/helm-charts/.+/values\\.ya?ml$/",
-            "/helm-charts/charts/.+/values\\.ya?ml$/"
+            "/helm-charts/.+/values\\.ya?ml$/"
         ]
     },
     "helmv3": {
         "managerFilePatterns": [
-            "/(^|/)Chart\\.ya?ml$/",
-            "/helm-charts/dependencies-Chart\\.ya?ml$/",
-            "/helm-charts/Chart\\.ya?ml$/",
-            "/helm-charts/charts/.+/Chart\\.ya?ml$/"
+            "/(^|/)Chart\\.ya?ml$/"
         ]
     },
     "packageRules": [
+        {
+            "description": "Track both Spring Boot 3.x and 4.x separately",
+            "matchPackageNames": [
+                "org.springframework.boot:spring-boot-starter-parent"
+            ],
+            "separateMultipleMajor": true
+        },
         {
             "matchCategories": [
                 "docker"
@@ -79,17 +94,39 @@
             "ignoreTests": true
         }
     ],
-    "ignoreDeps": [
-        "maven"
-    ],
-    "schedule": [
-        "before 5am"
+    "customManagers": [
+        {
+            "description": "Parse and change the java version from pom.xml",
+            "customType": "regex",
+            "datasourceTemplate": "custom.custom_java",
+            "depNameTemplate": "java",
+            "managerFilePatterns": [
+                "/(^|\\/)pom\\.xml$/"
+            ],
+            "matchStrings": [
+                "<java\\.version>(?<currentValue>\\d+)</java\\.version>"
+            ],
+            "autoReplaceStringTemplate": "<java.version>{{{newValue}}}</java.version>"
+        },
+        {
+            "description": "Parse and change JAVA_VERSION in GitHub workflows",
+            "customType": "regex",
+            "datasourceTemplate": "custom.custom_java",
+            "depNameTemplate": "java",
+            "managerFilePatterns": [
+                "/^\\.github\\/workflows\\/(release|maven-build)\\.ya?ml$/"
+            ],
+            "matchStrings": [
+                "  JAVA_VERSION:[\\t ]*(?<currentValue>\\d+)"
+            ],
+            "autoReplaceStringTemplate": "  JAVA_VERSION: {{{newValue}}}"
+        }
     ],
     "platformAutomerge": false,
     "dependencyDashboard": true,
     "prHourlyLimit": 0,
     "prConcurrentLimit": 0,
-    "baseBranches": [
+    "baseBranchPatterns": [
         "master"
     ],
     "branchPrefix": "feature/renovate-",
