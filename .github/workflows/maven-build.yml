@@ -234,7 +234,7 @@ jobs:
           mvn -B -e deploy -s $GITHUB_WORKSPACE/settings.xml
 
       - name: Upload Test Reports
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7.0.1
         if: failure()
         with:
           name: failsafe-and-surefire-reports
