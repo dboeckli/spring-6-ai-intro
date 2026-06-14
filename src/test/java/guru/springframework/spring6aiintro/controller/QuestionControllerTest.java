@@ -88,7 +88,8 @@ class QuestionControllerTest {
     @Test
     void getCapitalWithInfo() {
         GetCapitalRequest request = new GetCapitalRequest("Spain");
-        Answer expectedAnswer = new Answer("Madrid is the capital of Spain. It is located in the center of the country.");
+        Answer expectedAnswer = new Answer(
+                "Madrid is the capital of Spain. It is located in the center of the country.");
         when(openAIService.getCapitalWithInfo(request)).thenReturn(expectedAnswer);
 
         Answer actualAnswer = questionController.getCapitalWithInfo(request);
@@ -100,12 +101,8 @@ class QuestionControllerTest {
     @Test
     void getCapitalWithInfoWithParser() {
         GetCapitalRequest request = new GetCapitalRequest("Portugal");
-        GetCapitalDetailsResponse expectedResponse = new GetCapitalDetailsResponse(
-            "Lisbon", 
-            500L,
-            "Portugal", 
-            "portugish",
-            "Lisbon is the capital and largest city of Portugal.");
+        GetCapitalDetailsResponse expectedResponse = new GetCapitalDetailsResponse("Lisbon", 500L, "Portugal",
+                "portugish", "Lisbon is the capital and largest city of Portugal.");
         when(openAIService.getCapitalWithInfoWithParser(request)).thenReturn(expectedResponse);
 
         GetCapitalDetailsResponse actualResponse = questionController.getCapitalWithInfoWithParser(request);
@@ -120,19 +117,16 @@ class QuestionControllerTest {
         AssistantMessage expectedAssistantMessage = new AssistantMessage(expectedResponse);
         ChatResponse exptectedChatResponse = new ChatResponse(List.of(new Generation(expectedAssistantMessage)));
 
-        Conversation expectedConversation = new Conversation(null , exptectedChatResponse);
+        Conversation expectedConversation = new Conversation(null, exptectedChatResponse);
         when(openAIService.checkAi()).thenReturn(expectedConversation);
 
         ResponseEntity<Conversation> responseEntity = questionController.checkAi();
         Assertions.assertNotNull(responseEntity.getBody());
-        String responseText = responseEntity.getBody()
-            .chatResponse()
-            .getResult()
-            .getOutput()
-            .getText();
+        String responseText = responseEntity.getBody().chatResponse().getResult().getOutput().getText();
 
         assertEquals(200, responseEntity.getStatusCode().value());
         assertEquals(expectedResponse, responseText);
         verify(openAIService).checkAi();
     }
+
 }

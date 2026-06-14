@@ -19,31 +19,31 @@ public class ChatClientServiceImpl implements ChatClientService {
     private final ChatClient chatClient;
 
     private static final String SYSTEM_PROMPT = """
-        You are a helpful customer support assistant.
-        
-        Your responsibilities:
-        - Answer product questions and provide specifications
-        - Help troubleshoot technical issues step-by-step
-        - Assist with account and billing inquiries
-        - Provide clear, concise, and professional responses
-        
-        Important company information:
-        Business hours:
-        - Monday to Friday: 9:00 AM - 5:00 PM
-        - Saturday and Sunday: Closed
-        
-        Support channels:
-        - Email: support@company.com
-        - Phone: +49 (0) 123 456789 during business hours
-        
-        Special instructions:
-        - Always respond in the same language as the user's question
-        - When asked about opening hours ("Öffnungszeiten"), always provide the complete schedule
-        - Provide responses in a friendly and helpful tone
-        
-        If you cannot resolve an issue completely, guide the customer
-        to contact human support with specific next steps.
-        """;
+            You are a helpful customer support assistant.
+
+            Your responsibilities:
+            - Answer product questions and provide specifications
+            - Help troubleshoot technical issues step-by-step
+            - Assist with account and billing inquiries
+            - Provide clear, concise, and professional responses
+
+            Important company information:
+            Business hours:
+            - Monday to Friday: 9:00 AM - 5:00 PM
+            - Saturday and Sunday: Closed
+
+            Support channels:
+            - Email: support@company.com
+            - Phone: +49 (0) 123 456789 during business hours
+
+            Special instructions:
+            - Always respond in the same language as the user's question
+            - When asked about opening hours ("Öffnungszeiten"), always provide the complete schedule
+            - Provide responses in a friendly and helpful tone
+
+            If you cannot resolve an issue completely, guide the customer
+            to contact human support with specific next steps.
+            """;
 
     public ChatClientServiceImpl(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
@@ -55,14 +55,17 @@ public class ChatClientServiceImpl implements ChatClientService {
 
         try {
             // Send the user's message to the AI model via OpenRouter
-            String content = chatClient.prompt().system(SYSTEM_PROMPT).user(chatClientRequest.message())
+            String content = chatClient.prompt()
+                .system(SYSTEM_PROMPT)
+                .user(chatClientRequest.message())
                 .call()
                 .content();
 
             log.info("✅ Support response generated with full observability");
             return new ChatClientResponse(content);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // Log the error for debugging while providing user-friendly response
             log.error("❌ Error processing message: " + e.getMessage());
             return new ChatClientResponse("I apologize for the technical difficulty. Please try again in a moment.");
@@ -79,7 +82,8 @@ public class ChatClientServiceImpl implements ChatClientService {
                 .call()
                 .content();
             return new ChatClientResponse(content);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("❌ Error: " + e.getMessage());
             return new ChatClientResponse("Error occurred.");
         }
@@ -87,15 +91,10 @@ public class ChatClientServiceImpl implements ChatClientService {
 
     @Override
     public Conversation checkAi() {
-        ChatResponse chatResponse = chatClient.prompt()
-            .user(PROMPT_CHECK_AI)
-            .call()
-            .chatResponse();
+        ChatResponse chatResponse = chatClient.prompt().user(PROMPT_CHECK_AI).call().chatResponse();
 
-        return new Conversation(
-            new Prompt(new UserMessage(PROMPT_CHECK_AI)),
-            chatResponse
-        );
+        return new Conversation(new Prompt(new UserMessage(PROMPT_CHECK_AI)), chatResponse);
 
     }
+
 }

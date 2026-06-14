@@ -51,6 +51,5 @@ public class QuestionController {
         Conversation conversation = openAIService.checkAi();
         return ResponseEntity.ok(conversation);
     }
-    
-    
+
 }

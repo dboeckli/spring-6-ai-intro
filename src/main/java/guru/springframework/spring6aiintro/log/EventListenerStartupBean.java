@@ -1,6 +1,7 @@
-package guru.springframework.spring6aiintro;
+package guru.springframework.spring6aiintro.log;
 
 import guru.springframework.spring6aiintro.service.OpenAIService;
+import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -18,6 +19,7 @@ public class EventListenerStartupBean {
     private final ObjectMapper objectMapper;
 
     @EventListener
+    @Observed(name = "check-ai", contextualName = "handle-context-refresh")
     public void onApplicationEvent(ContextRefreshedEvent event) {
         log.info("###################################################");
         log.info("Starting AI check at startup event: " + event.toString());

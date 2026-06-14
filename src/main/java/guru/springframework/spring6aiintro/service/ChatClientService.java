@@ -11,4 +11,5 @@ public interface ChatClientService {
     ChatClientResponse processSimpleQuery(ChatClientRequest chatClientRequest);
 
     Conversation checkAi();
+
 }

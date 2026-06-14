@@ -1,7 +1,5 @@
 package guru.springframework.spring6aiintro.service;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import guru.springframework.spring6aiintro.dto.Answer;
 import guru.springframework.spring6aiintro.dto.GetCapitalDetailsResponse;
 import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
@@ -27,13 +25,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-
 @SpringBootTest
 @ActiveProfiles("local")
 @ExtendWith(OpenApiKeyExtension.class)
 @Slf4j
 class OpenAIServiceImplIT {
-    
+
     @Autowired
     OpenAIService openAIService;
 
@@ -89,8 +86,7 @@ class OpenAIServiceImplIT {
         assertThat(response.getMetadata().getUsage(), notNullValue());
         assertThat(response.getMetadata().getRateLimit(), notNullValue());
 
-        ObjectMapper objectMapper = JsonMapper.builder()
-            .build();
+        ObjectMapper objectMapper = JsonMapper.builder().build();
 
         Map<String, Object> jsonOutput = new LinkedHashMap<>();
 
@@ -114,9 +110,7 @@ class OpenAIServiceImplIT {
         Conversation conversation = assertDoesNotThrow(() -> openAIService.checkAi());
         assertNotNull(conversation);
 
-        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(
-            containsString("4")
-        ));
+        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(containsString("4")));
     }
 
 }

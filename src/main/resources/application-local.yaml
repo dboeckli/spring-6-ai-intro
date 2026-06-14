@@ -2,6 +2,10 @@ spring:
   application:
     name: spring-6-ai-intro
 
+  threads:
+    virtual:
+      enabled: true
+
   ai:
     openai:
       #Pass API key as environment variable, e.g. -DOPENAI_API_KEY=your-api-key
@@ -9,8 +13,7 @@ spring:
       api-key: ${OPENAI_API_KEY}
       chat:
         api-key: ${OPENAI_API_KEY}
-        options:
-          model: gpt-4o
+        model: gpt-4o
     chat:
       client:
         enabled: true
@@ -22,7 +25,7 @@ spring:
         log-completion: true
         # Enable error logging for troubleshooting
         include-error-logging: true
-          
+
 management:
   health:
     readinessstate:
@@ -71,8 +74,28 @@ management:
       client:
         requests:
           name: http-client-requests
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    export:
+      otlp:
+        enabled: false
+    sampling:
+      probability: 1.0
+
+  logging:
+    export:
+      enabled: false
+      otlp:
+        enabled: false
 
   simple:
     metrics:
       export:
         enabled: false
+
+logging:
+  level:
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
