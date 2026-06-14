@@ -1,9 +1,5 @@
 package guru.springframework.spring6aiintro.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import guru.springframework.spring6aiintro.dto.Answer;
 import guru.springframework.spring6aiintro.dto.GetCapitalDetailsResponse;
 import guru.springframework.spring6aiintro.dto.GetCapitalRequest;
@@ -17,6 +13,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,13 +25,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-
 @SpringBootTest
 @ActiveProfiles("local")
 @ExtendWith(OpenApiKeyExtension.class)
 @Slf4j
 class OpenAIServiceImplIT {
-    
+
     @Autowired
     OpenAIService openAIService;
 
@@ -80,7 +77,7 @@ class OpenAIServiceImplIT {
     }
 
     @Test
-    void testGetRawResponse() throws JsonProcessingException {
+    void testGetRawResponse() {
         String input = "2+2=?";
         ChatResponse response = openAIService.getRawResponse(input);
 
@@ -88,10 +85,8 @@ class OpenAIServiceImplIT {
         assertThat(response.getMetadata().getModel(), notNullValue());
         assertThat(response.getMetadata().getUsage(), notNullValue());
         assertThat(response.getMetadata().getRateLimit(), notNullValue());
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        ObjectMapper objectMapper = JsonMapper.builder().build();
 
         Map<String, Object> jsonOutput = new LinkedHashMap<>();
 
@@ -115,9 +110,7 @@ class OpenAIServiceImplIT {
         Conversation conversation = assertDoesNotThrow(() -> openAIService.checkAi());
         assertNotNull(conversation);
 
-        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(
-            containsString("4")
-        ));
+        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(containsString("4")));
     }
 
 }

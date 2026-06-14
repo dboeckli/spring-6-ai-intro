@@ -18,8 +18,8 @@ public class ChatController {
     private final ChatClientService chatClientService;
 
     /**
-     * Handle customer support chat requests
-     * Each request triggers complete observability pipeline
+     * Handle customer support chat requests Each request triggers complete observability
+     * pipeline
      */
     @PostMapping("/message")
     public ResponseEntity<ChatClientResponse> sendMessage(@RequestBody ChatClientRequest chatClientRequest) {

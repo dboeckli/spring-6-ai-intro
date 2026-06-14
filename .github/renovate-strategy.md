@@ -9,3 +9,4 @@
 5. Schedule updates to run before 5am daily.
 6. Separate minor and patch updates for better granularity in version control.
 7. Use feature branches for all Renovate updates.
+

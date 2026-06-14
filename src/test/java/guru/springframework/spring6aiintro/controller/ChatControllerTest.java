@@ -50,10 +50,9 @@ class ChatControllerTest {
         ResponseEntity<ChatClientResponse> responseEntity = chatController.sendMessage(chatClientRequest);
 
         assertAll("Chat Response Validation",
-            () -> assertEquals(200, responseEntity.getStatusCode().value(), "HTTP Status sollte 200 OK sein"),
-            () -> assertEquals(expectedResponse, responseEntity.getBody(), "Response Body sollte übereinstimmen"),
-            () -> verify(chatService).processMessage(chatClientRequest)
-        );
+                () -> assertEquals(200, responseEntity.getStatusCode().value(), "HTTP Status sollte 200 OK sein"),
+                () -> assertEquals(expectedResponse, responseEntity.getBody(), "Response Body sollte übereinstimmen"),
+                () -> verify(chatService).processMessage(chatClientRequest));
     }
 
     @Test
@@ -65,11 +64,9 @@ class ChatControllerTest {
         // When
         ResponseEntity<ChatClientResponse> responseEntity = chatController.sendQuickQuery(chatClientRequest);
 
-        assertAll("Chat Response Validation",
-            () -> assertEquals(200, responseEntity.getStatusCode().value()),
-            () -> assertEquals(expectedResponse, responseEntity.getBody()),
-            () -> verify(chatService).processSimpleQuery(chatClientRequest)
-        );
+        assertAll("Chat Response Validation", () -> assertEquals(200, responseEntity.getStatusCode().value()),
+                () -> assertEquals(expectedResponse, responseEntity.getBody()),
+                () -> verify(chatService).processSimpleQuery(chatClientRequest));
     }
 
     @Test
@@ -79,23 +76,17 @@ class ChatControllerTest {
         AssistantMessage expectedAssistantMessage = new AssistantMessage(expectedResponse);
         ChatResponse exptectedChatResponse = new ChatResponse(List.of(new Generation(expectedAssistantMessage)));
 
-        Conversation expectedConversation = new Conversation(null , exptectedChatResponse);
+        Conversation expectedConversation = new Conversation(null, exptectedChatResponse);
         when(chatService.checkAi()).thenReturn(expectedConversation);
 
         // When
         ResponseEntity<Conversation> responseEntity = chatController.checkAi();
         Assertions.assertNotNull(responseEntity.getBody());
-        String responseText = responseEntity.getBody()
-            .chatResponse()
-            .getResult()
-            .getOutput()
-            .getText();
+        String responseText = responseEntity.getBody().chatResponse().getResult().getOutput().getText();
 
         // Then
-        assertAll("AI Check Erfolgsfall",
-            () -> assertEquals(200, responseEntity.getStatusCode().value()),
-            () -> assertEquals(expectedResponse, responseText),
-            () -> verify(chatService).checkAi()
-        );
+        assertAll("AI Check Erfolgsfall", () -> assertEquals(200, responseEntity.getStatusCode().value()),
+                () -> assertEquals(expectedResponse, responseText), () -> verify(chatService).checkAi());
     }
+
 }

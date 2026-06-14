@@ -6,8 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("local")
 @ExtendWith(OpenApiKeyExtension.class)
+@AutoConfigureTestRestTemplate
 @Slf4j
 class AITokenUsageIT {
 
@@ -40,11 +42,7 @@ class AITokenUsageIT {
                 📊 Token-Nutzung Details:
                 Input Tokens: {}
                 Output Tokens: {}
-                Gesamt: {}""",
-            input,
-            output,
-            total
-        );
+                Gesamt: {}""", input, output, total);
 
         double expectedInput = 13.0;
         double expectedMinOutput = 1.0;
@@ -57,10 +55,9 @@ class AITokenUsageIT {
         assertThat(total, allOf(greaterThanOrEqualTo(expectedMinTotal), lessThanOrEqualTo(expectedMaxTotal)));
     }
 
-
     private double getTokenUsage(String type) {
-        String url = String.format("http://localhost:%d/actuator/metrics/gen_ai.client.token.usage?tag=gen_ai.token.type:%s",
-            port, type);
+        String url = String.format(
+                "http://localhost:%d/actuator/metrics/gen_ai.client.token.usage?tag=gen_ai.token.type:%s", port, type);
         ResponseEntity<MetricsResponse> response = restTemplate.getForEntity(url, MetricsResponse.class);
         return Optional.ofNullable(response.getBody())
             .map(MetricsResponse::measurements)

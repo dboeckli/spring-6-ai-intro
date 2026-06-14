@@ -16,7 +16,6 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-
 @SpringBootTest
 @ActiveProfiles("local")
 @ExtendWith(OpenApiKeyExtension.class)
@@ -31,68 +30,45 @@ class ChatClientServiceImplIT {
         ChatClientRequest request = new ChatClientRequest("Was sind Ihre Öffnungszeiten?");
         ChatClientResponse response = chatClientService.processMessage(request);
 
-        assertThat(response.response(), allOf(
-            notNullValue(),
-            containsString("Öffnungszeiten"),
-            not(containsString("technical difficulty")),
-            not(containsString("❌"))
-        ));
+        assertThat(response.response(), allOf(notNullValue(), containsString("Öffnungszeiten"),
+                not(containsString("technical difficulty")), not(containsString("❌"))));
         assertThat(response.response().length(), greaterThan(20));
     }
 
     @Test
     void testProcessTechnicalSupport() {
         ChatClientRequest request = new ChatClientRequest(
-            "Meine Anwendung startet nicht. Beim Start erscheint die Fehlermeldung 'Port bereits in Verwendung'. Was kann ich tun?"
-        );
+                "Meine Anwendung startet nicht. Beim Start erscheint die Fehlermeldung 'Port bereits in Verwendung'. Was kann ich tun?");
         ChatClientResponse response = chatClientService.processMessage(request);
 
-        assertThat(response.response(), allOf(
-            notNullValue(),
-            containsString("Port"),
-            anyOf(
-                containsString("können"),
-                containsString("müssen"),
-                containsString("sollten"),
-                containsString("folgende Schritte"),
-                containsString("Schritte, die")
-            ),
-            not(containsString("technical difficulty"))
-        ));
+        assertThat(response.response(),
+                allOf(notNullValue(), containsString("Port"),
+                        anyOf(containsString("können"), containsString("müssen"), containsString("sollten"),
+                                containsString("folgende Schritte"), containsString("Schritte, die")),
+                        not(containsString("technical difficulty"))));
         assertThat(response.response().length(), greaterThan(50));
     }
 
     @Test
     void testProcessComplexInquiry() {
         ChatClientRequest request = new ChatClientRequest(
-            "Ich möchte meine Datenbank von MySQL auf PostgreSQL migrieren. " +
-                "Welche Schritte sind notwendig und worauf muss ich besonders achten?"
-        );
+                "Ich möchte meine Datenbank von MySQL auf PostgreSQL migrieren. "
+                        + "Welche Schritte sind notwendig und worauf muss ich besonders achten?");
         ChatClientResponse response = chatClientService.processMessage(request);
 
-        assertThat(response.response(), allOf(
-            notNullValue(),
-            containsString("MySQL"),
-            containsString("PostgreSQL"),
-            containsString("Migration"),
-            not(containsString("technical difficulty"))
-        ));
+        assertThat(response.response(), allOf(notNullValue(), containsString("MySQL"), containsString("PostgreSQL"),
+                containsString("Migration"), not(containsString("technical difficulty"))));
         assertThat(response.response().length(), greaterThan(100));
     }
 
     @Test
     void testProcessMultilingualSupport() {
         ChatClientRequest request = new ChatClientRequest(
-            "How can I configure my application.properties for database connection?"
-        );
+                "How can I configure my application.properties for database connection?");
         ChatClientResponse response = chatClientService.processMessage(request);
 
-        assertThat(response.response(), allOf(
-            notNullValue(),
-            containsString("application.properties"),
-            containsString("database"),
-            not(containsString("technical difficulty"))
-        ));
+        assertThat(response.response(), allOf(notNullValue(), containsString("application.properties"),
+                containsString("database"), not(containsString("technical difficulty"))));
         assertThat(response.response().length(), greaterThan(50));
     }
 
@@ -101,10 +77,7 @@ class ChatClientServiceImplIT {
         ChatClientRequest request = new ChatClientRequest("2+2?");
         ChatClientResponse response = chatClientService.processSimpleQuery(request);
 
-        assertThat(response.response(), allOf(
-            notNullValue(),
-            containsString("4")
-        ));
+        assertThat(response.response(), allOf(notNullValue(), containsString("4")));
         // Erwarte sehr kurze Antwort
         assertThat(response.response().length(), both(greaterThan(0)).and(lessThan(10)));
     }
@@ -115,8 +88,7 @@ class ChatClientServiceImplIT {
 
         assertNotNull(conversation);
 
-        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(
-            containsString("4")
-        ));
+        assertThat(conversation.chatResponse().getResult().getOutput().getText(), allOf(containsString("4")));
     }
+
 }
