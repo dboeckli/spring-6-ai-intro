@@ -1,8 +1,6 @@
 package guru.springframework.spring6aiintro.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import guru.springframework.spring6aiintro.dto.*;
 import guru.springframework.spring6aiintro.dto.check.Conversation;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +14,9 @@ import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
@@ -108,7 +109,7 @@ public class OpenAIServiceImpl implements OpenAIService {
             JsonNode jsonNode = objectMapper.readTree(response.getResult().getOutput().getText());
             responseString = jsonNode.get("answer").asText();
 
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             log.error("Error parsing JSON response: " + response.getResult().getOutput().getText(), ex);
             throw new RuntimeException(ex);
         }

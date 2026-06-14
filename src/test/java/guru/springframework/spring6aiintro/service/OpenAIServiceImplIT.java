@@ -1,7 +1,5 @@
 package guru.springframework.spring6aiintro.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import guru.springframework.spring6aiintro.dto.Answer;
@@ -17,6 +15,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -80,7 +80,7 @@ class OpenAIServiceImplIT {
     }
 
     @Test
-    void testGetRawResponse() throws JsonProcessingException {
+    void testGetRawResponse() {
         String input = "2+2=?";
         ChatResponse response = openAIService.getRawResponse(input);
 
@@ -88,10 +88,9 @@ class OpenAIServiceImplIT {
         assertThat(response.getMetadata().getModel(), notNullValue());
         assertThat(response.getMetadata().getUsage(), notNullValue());
         assertThat(response.getMetadata().getRateLimit(), notNullValue());
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        ObjectMapper objectMapper = JsonMapper.builder()
+            .build();
 
         Map<String, Object> jsonOutput = new LinkedHashMap<>();
 
