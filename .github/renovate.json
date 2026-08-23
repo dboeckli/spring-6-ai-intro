@@ -54,6 +54,16 @@
     },
     "packageRules": [
         {
+            "description": "Ignore Maven APIs/SPIs",
+            "matchDatasources": [
+                "maven"
+            ],
+            "matchPackageNames": [
+                "org.apache.maven:*"
+            ],
+            "enabled": false
+        },
+        {
             "description": "Track both Spring Boot 3.x and 4.x separately",
             "matchPackageNames": [
                 "org.springframework.boot:spring-boot-starter-parent"
