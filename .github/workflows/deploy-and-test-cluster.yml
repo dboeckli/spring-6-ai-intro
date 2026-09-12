@@ -70,13 +70,13 @@ jobs:
           echo "Logging in to Docker Hub"
           echo "$DOCKER_ACCESS_TOKEN" | helm registry login -u "$DOCKER_USER" --password-stdin registry-1.docker.io
           
-          echo "Pulling Helm Chart Version: $HELM_CHART_VERSION from oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME"
-          helm pull oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME --version "$HELM_CHART_VERSION"
-          tar -xvf $APPLICATION_NAME-v*.tgz  
+          echo "Pulling Helm Chart Version: $HELM_CHART_VERSION from oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME-chart"
+          helm pull oci://registry-1.docker.io/$DOCKER_USER/$APPLICATION_NAME-chart --version "$HELM_CHART_VERSION"
+          tar -xvf $APPLICATION_NAME-*.tgz  
 
       - name: Deploy application with Helm
         env:
-          APP_VERSION: ${{ inputs.version }}
+          APP_VERSION: ${{ inputs.helm-chart-version }}
           APPLICATION_NAME: ${{ inputs.application-name }}
           NAMESPACE: ${{ inputs.namespace }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -100,8 +100,7 @@ jobs:
           
           # Install/upgrade the Helm chart
           echo "Deploying Application $APPLICATION_NAME: $APP_VERSION"
-          helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME \
-          --set image.tag=${APP_VERSION} \
+          helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME-chart \
           --set openai.apiKey="${OPENAI_API_KEY}" \
           --set docker.dockerUser="${DOCKER_USER}" \
           --set docker.dockerToken="${DOCKER_TOKEN}" \
@@ -126,12 +125,12 @@ jobs:
             exit 1
           fi
           BUILD_LINK="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.deployed-by-build }}"
-          echo "::notice:: ### Helm Deployed Version: ${{ inputs.version }}"
+          echo "::notice:: ### Helm Deployed Version: ${{ inputs.helm-chart-version }}"
           echo "::notice:: ### Deployment triggered by workflow ${{ inputs.deployed-by-workflow }}. Run number: ${{ inputs.deployed-by-build }}: $BUILD_LINK"
 
       - name: Test Application
         env:
-          APP_VERSION: ${{ inputs.version }}
+          APP_VERSION: ${{ inputs.helm-chart-version }}
           APPLICATION_NAME: ${{ inputs.application-name }}
           NAMESPACE: ${{ inputs.namespace }}
         run: |

@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="test-k8s" type="PowerShellRunType" factoryName="PowerShell" scriptUrl="C:\development\projects\spring-6-ai-intro\.run\scripts\test-k8s.ps1" workingDirectory="C:\development\projects\spring-6-ai-intro\" executablePath="$PROJECT_DIR$/../../../WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe">
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

@@ -1,3 +1,6 @@
+nameOverride: "@project.artifactId@"
+fullnameOverride: "@project.artifactId@"
+
 global:
   timezone: Europe/Zurich
   timezonePath: /etc/localtime

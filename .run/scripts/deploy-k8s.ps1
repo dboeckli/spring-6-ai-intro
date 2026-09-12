@@ -1,6 +1,6 @@
 cd target/helm/repo
 
-$file = Get-ChildItem -Filter spring-6-ai-intro-v*.tgz | Select-Object -First 1
+$file = Get-ChildItem -Filter spring-6-ai-intro-chart-*.tgz | Select-Object -First 1
 tar -xvf $file.Name
 
 $APPLICATION_NAME = Get-ChildItem -Directory |
