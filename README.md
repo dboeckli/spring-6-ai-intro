@@ -5,6 +5,31 @@ This project uses private Docker repositories and GitHub, requiring specific dep
 
 Application runs on port 8080/30080
 
+## Architecture Overview
+
+```mermaid
+graph LR
+    Client(["Client"])
+
+    subgraph App ["Spring Boot / Spring AI :8080"]
+        QuestionController["QuestionController\n/ask · /capital · /capitalWithInfo"]
+        ChatController["ChatController\n/api/chat"]
+        OpenAIService["OpenAIService\nChatModel + PromptTemplate"]
+        ChatClientService["ChatClientService\nChatClient"]
+        QuestionController --> OpenAIService
+        ChatController --> ChatClientService
+    end
+
+    subgraph External ["External Service"]
+        OpenAI["OpenAI API\ngpt-4o"]
+    end
+
+    Client <-->|"HTTP / JSON"| QuestionController
+    Client <-->|"HTTP / JSON"| ChatController
+    OpenAIService <-->|"chat completions"| OpenAI
+    ChatClientService <-->|"chat completions"| OpenAI
+```
+
 ## AI Test Prompts
 
 A collection of AI test prompts can be found in the [AI-Test.md](AI-Test.md) file. These prompts were developed by Mathew Berman to test and evaluate the capabilities of different AI models.
@@ -68,21 +93,37 @@ cd target/helm/repo
 unpack
 
 ```powershell
-$file = Get-ChildItem -Filter *.tgz | Select-Object -First 1
+$file = Get-ChildItem -Filter spring-6-ai-intro-chart-*.tgz | Select-Object -First 1
 tar -xvf $file.Name
 ```
 
-install
+install (the chart requires the OpenAI key and the Docker Hub credentials for the registry pull secret)
 
 ```powershell
 $APPLICATION_NAME = Get-ChildItem -Directory | Where-Object { $_.LastWriteTime -ge $file.LastWriteTime } | Select-Object -ExpandProperty Name
-helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME --namespace spring-6-ai-intro --create-namespace --wait --timeout 8m --debug --render-subchart-notes
+
+$OPENAI_API_KEY = Read-Host "Enter your OpenAI API Key (OPENAI_API_KEY)" -AsSecureString
+$DOCKER_USER = "domboeckli"
+$DOCKER_TOKEN = Read-Host "Enter your Docker token (DOCKER_TOKEN)" -AsSecureString
+$OPENAI_API_KEY_PLAIN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($OPENAI_API_KEY))
+$DOCKER_TOKEN_PLAIN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($DOCKER_TOKEN))
+
+helm upgrade --install $APPLICATION_NAME ./$APPLICATION_NAME `
+    --namespace spring-6-ai-intro `
+    --create-namespace `
+    --wait `
+    --timeout 8m `
+    --debug `
+    --render-subchart-notes `
+    --set openai.apiKey="$OPENAI_API_KEY_PLAIN" `
+    --set docker.dockerUser="$DOCKER_USER" `
+    --set docker.dockerToken="$DOCKER_TOKEN_PLAIN"
 ```
 
 show logs
 
 ```powershell
-kubectl get pods -l app.kubernetes.io/name=$APPLICATION_NAME -n spring-6-ai-intro
+kubectl get pods -n spring-6-ai-intro
 ```
 
 replace $POD with pods from the command above
@@ -116,3 +157,45 @@ kubectl run busybox-test --rm -it --image=busybox:1.36 --namespace=spring-6-ai-i
 ```
 
 You can use the actuator rest call to verify via port 30080
+
+## Sandbox
+
+Development in an isolated Docker sandbox via [opencode-sandbox-kit](https://github.com/dboeckli/opencode-sandbox-kit).
+Prerequisites: `sbx` CLI, secrets (`sbx secret set github` + `sbx secret set github-maven`), IntelliJ-MCP registration
+(`sbx mcp add idea --url http://localhost:64615/stream --skip-ssrf-check`).
+
+Start (PowerShell) — multiline, with `--static-mcp idea`, pinned template version and a read-only host Maven cache
+(no re-download of cached dependencies):
+
+```powershell
+sbx run opencode --name spring-6-ai-intro `
+    --static-mcp idea `
+    --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
+    -t docker/sandbox-templates:opencode-docker-0.5.0 `
+    "C:\development\projects\spring-6-ai-intro" `
+    "$env:USERPROFILE\.kube:ro" `       # optional: Kubernetes (kubectl/helm against the Docker Desktop cluster)
+    "C:\development\maven-repo:ro"      # read-only host Maven cache (opencode-sandbox-kit #87)
+```
+
+Other agents (same kit):
+
+```powershell
+# Claude Code
+sbx run claude --name spring-6-ai-intro `
+    --static-mcp idea `
+    --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
+    -t docker/sandbox-templates:claude-code-docker-0.5.0 `
+    "C:\development\projects\spring-6-ai-intro" `
+    "C:\development\maven-repo:ro"
+
+# Mammouth Code (template pin lives in the spec image)
+sbx run mammouth --name spring-6-ai-intro `
+    --static-mcp idea `
+    --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=mammouth-agent" `
+    "C:\development\projects\spring-6-ai-intro" `
+    "C:\development\maven-repo:ro"
+```
+
+> **Sandbox quirk:** before every `./mvnw` run `export npm_config_bin_links=false` (Spotless/prettier fails with
+> EPERM in the mount). The read-only `C:\development\maven-repo:ro` mount lets Maven use the host cache.
+

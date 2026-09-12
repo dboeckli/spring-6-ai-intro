@@ -22,7 +22,7 @@ jobs:
 
       - uses: mfinelli/setup-shfmt@v4
         with:
-          shfmt-version: 3.13.0
+          shfmt-version: 3.14.1
 
       - name: Check for main
         run: |
@@ -48,7 +48,7 @@ jobs:
 
       - uses: mfinelli/setup-shfmt@v4
         with:
-          shfmt-version: 3.13.0
+          shfmt-version: 3.14.1
 
       - name: Check version
         run: |
@@ -76,7 +76,7 @@ jobs:
 
       - uses: mfinelli/setup-shfmt@v4
         with:
-          shfmt-version: 3.13.0
+          shfmt-version: 3.14.1
 
       - name: Set up java
         uses: actions/setup-java@v6
