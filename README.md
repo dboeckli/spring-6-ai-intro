@@ -116,3 +116,45 @@ kubectl run busybox-test --rm -it --image=busybox:1.36 --namespace=spring-6-ai-i
 ```
 
 You can use the actuator rest call to verify via port 30080
+
+## Sandbox
+
+Development in an isolated Docker sandbox via [opencode-sandbox-kit](https://github.com/dboeckli/opencode-sandbox-kit).
+Prerequisites: `sbx` CLI, secrets (`sbx secret set github` + `sbx secret set github-maven`), IntelliJ-MCP registration
+(`sbx mcp add idea --url http://localhost:64615/stream --skip-ssrf-check`).
+
+Start (PowerShell) — multiline, with `--static-mcp idea`, pinned template version and a read-only host Maven cache
+(no re-download of cached dependencies):
+
+```powershell
+sbx run opencode --name spring-6-ai-intro `
+    --static-mcp idea `
+    --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
+    -t docker/sandbox-templates:opencode-docker-0.5.0 `
+    "C:\development\projects\spring-6-ai-intro" `
+    "$env:USERPROFILE\.kube:ro" `
+    "C:\development\maven-repo:ro"
+```
+
+Other agents (same kit):
+
+```powershell
+# Claude Code
+sbx run claude --name spring-6-ai-intro `
+    --static-mcp idea `
+    --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
+    -t docker/sandbox-templates:claude-code-docker-0.5.0 `
+    "C:\development\projects\spring-6-ai-intro" `
+    "C:\development\maven-repo:ro"
+
+# Mammouth Code (template pin lives in the spec image)
+sbx run mammouth --name spring-6-ai-intro `
+    --static-mcp idea `
+    --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=mammouth-agent" `
+    "C:\development\projects\spring-6-ai-intro" `
+    "C:\development\maven-repo:ro"
+```
+
+> **Sandbox quirk:** before every `./mvnw` run `export npm_config_bin_links=false` (Spotless/prettier fails with
+> EPERM in the mount). The read-only `C:\development\maven-repo:ro` mount lets Maven use the host cache.
+
