@@ -25,6 +25,14 @@
         "helmv3",
         "custom.regex"
     ],
+    "ignorePaths": [
+        "**/node_modules/**",
+        "**/bower_components/**",
+        "**/vendor/**",
+        "**/examples/**",
+        "**/__tests__/**",
+        "**/__fixtures__/**"
+    ],
     "maven-wrapper": {
         "managerFilePatterns": [
             "/(^|/)mvnw$/",
@@ -130,6 +138,21 @@
                 "  JAVA_VERSION:[\\t ]*(?<currentValue>\\d+)"
             ],
             "autoReplaceStringTemplate": "  JAVA_VERSION: {{{newValue}}}"
+        },
+        {
+            "description": "Update shfmt version pinned in pom.xml (spotless shfmt formatter) and GitHub workflows (mfinelli/setup-shfmt)",
+            "customType": "regex",
+            "datasourceTemplate": "github-tags",
+            "depNameTemplate": "mvdan/sh",
+            "extractVersionTemplate": "^v?(?<version>.*)$",
+            "managerFilePatterns": [
+                "/(^|\\/)pom\\.xml$/",
+                "/^\\.github\\/workflows\\/(maven-build|release)\\.ya?ml$/"
+            ],
+            "matchStrings": [
+                "<shfmt>\\s*<version>(?<currentValue>\\d+\\.\\d+\\.\\d+)</version>",
+                "shfmt-version:[\\t ]*(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+            ]
         }
     ],
     "platformAutomerge": false,
