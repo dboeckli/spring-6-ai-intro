@@ -168,31 +168,34 @@ Start (PowerShell) — multiline, with `--static-mcp idea`, pinned template vers
 (no re-download of cached dependencies):
 
 ```powershell
-sbx run opencode --name spring-6-ai-intro `
-    --static-mcp idea `
+sbx run opencode `
     --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
-    -t docker/sandbox-templates:opencode-docker-0.5.0 `
-    "C:\development\projects\spring-6-ai-intro" `
-    "$env:USERPROFILE\.kube:ro" `       # optional: Kubernetes (kubectl/helm against the Docker Desktop cluster)
-    "C:\development\maven-repo:ro"      # read-only host Maven cache (opencode-sandbox-kit #87)
+    --template docker/sandbox-templates:opencode-docker-0.5.0 `
+    --no-share-skills `
+    --static-mcp idea `
+    . `
+    "$env:USERPROFILE\.kube:ro" `
+    "C:\development\maven-repo:ro"
 ```
 
 Other agents (same kit):
 
 ```powershell
 # Claude Code
-sbx run claude --name spring-6-ai-intro `
-    --static-mcp idea `
+sbx run claude `
     --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
-    -t docker/sandbox-templates:claude-code-docker-0.5.0 `
-    "C:\development\projects\spring-6-ai-intro" `
+    --template docker/sandbox-templates:claude-code-docker-0.5.0 `
+    --no-share-skills `
+    --static-mcp idea `
+    . `
     "C:\development\maven-repo:ro"
 
 # Mammouth Code (template pin lives in the spec image)
-sbx run mammouth --name spring-6-ai-intro `
-    --static-mcp idea `
+sbx run mammouth `
     --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=mammouth-agent" `
-    "C:\development\projects\spring-6-ai-intro" `
+    --no-share-skills `
+    --static-mcp idea `
+    . `
     "C:\development\maven-repo:ro"
 ```
 
