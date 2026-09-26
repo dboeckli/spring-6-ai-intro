@@ -164,14 +164,14 @@ Development in an isolated Docker sandbox via [opencode-sandbox-kit](https://git
 Prerequisites: `sbx` CLI, secrets (`sbx secret set github` + `sbx secret set github-maven`), IntelliJ-MCP registration
 (`sbx mcp add idea --url http://localhost:64615/stream --skip-ssrf-check`).
 
-Start (PowerShell) — multiline, with `--static-mcp idea`, pinned template version and a read-only host Maven cache
+Start (PowerShell) — multiline, with `--static-mcp idea`, tooling image and a read-only host Maven cache
 (no re-download of cached dependencies):
 
 ```powershell
 sbx run opencode `
     --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
-    --template docker/sandbox-templates:opencode-docker-0.5.0 `
-    --no-share-skills `
+    --template docker.io/domboeckli/sbx-opencode-tooling:latest `
+    --skills=off `
     --static-mcp idea `
     . `
     "$env:USERPROFILE\.kube:ro" `
@@ -184,8 +184,8 @@ Other agents (same kit):
 # Claude Code
 sbx run claude `
     --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=opencode-agent" `
-    --template docker/sandbox-templates:claude-code-docker-0.5.0 `
-    --no-share-skills `
+    --template docker.io/domboeckli/sbx-claude-tooling:latest `
+    --skills=off `
     --static-mcp idea `
     . `
     "C:\development\maven-repo:ro"
@@ -193,7 +193,8 @@ sbx run claude `
 # Mammouth Code (template pin lives in the spec image)
 sbx run mammouth `
     --kit "git+https://github.com/dboeckli/opencode-sandbox-kit.git#dir=mammouth-agent" `
-    --no-share-skills `
+    --kit-arg imageTag=latest `
+    --skills=off `
     --static-mcp idea `
     . `
     "C:\development\maven-repo:ro"
