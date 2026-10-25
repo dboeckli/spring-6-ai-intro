@@ -153,6 +153,19 @@
                 "<shfmt>\\s*<version>(?<currentValue>\\d+\\.\\d+\\.\\d+)</version>",
                 "shfmt-version:[\\t ]*(?<currentValue>\\d+\\.\\d+\\.\\d+)"
             ]
+        },
+        {
+            "description": "Update the pinned Paketo builder used by spring-boot:build-image (TODO: remove pin once https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/344 is fixed; with Spring Boot 4.2.x switch to the new default paketobuildpacks/ubuntu-resolute-builder)",
+            "customType": "regex",
+            "datasourceTemplate": "docker",
+            "depNameTemplate": "paketobuildpacks/builder-noble-java-tiny",
+            "versioningTemplate": "docker",
+            "managerFilePatterns": [
+                "/(^|\\/)pom\\.xml$/"
+            ],
+            "matchStrings": [
+                "<spring-boot\\.build-image\\.builder>paketobuildpacks/builder-noble-java-tiny:(?<currentValue>\\d+\\.\\d+\\.\\d+)</spring-boot\\.build-image\\.builder>"
+            ]
         }
     ],
     "platformAutomerge": false,

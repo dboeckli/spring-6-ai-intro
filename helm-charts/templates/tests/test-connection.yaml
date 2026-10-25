@@ -3,8 +3,13 @@ kind: Pod
 metadata:
   name: "{{ include "application-template.fullname" . }}-test"
   namespace: {{ .Values.global.namespace }}
+  # Do not use application-template.labels here: its selector labels would make
+  # this test pod a Service endpoint, so requests could hit the test pod
+  # (nothing listening on the service port) instead of the application.
   labels:
-    {{- include "application-template.labels" . | nindent 4 }}
+    helm.sh/chart: {{ include "application-template.chart" . }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/component: test
   annotations:
     "helm.sh/hook": test
 spec:
