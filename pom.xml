@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.1.1</version>
+    <version>4.1.2</version>
     <!-- to avoid conflicts between sortpom and release maven plugin, we add here the space before the closing slash -->
     <relativePath />
   </parent>
@@ -47,6 +47,10 @@
     <skip.docker.build>false</skip.docker.build>
     <skip.docker.publish>true</skip.docker.publish>
     <skip.start.stop.springboot>false</skip.start.stop.springboot>
+
+    <!-- TODO: remove this pin once https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/344 is fixed -->
+    <!-- :latest is arm64-only since 0.0.200; with Spring Boot 4.2.x switch to the new default paketobuildpacks/ubuntu-resolute-builder -->
+    <spring-boot.build-image.builder>paketobuildpacks/builder-noble-java-tiny:0.0.200</spring-boot.build-image.builder>
 
     <docker.image.tag>development</docker.image.tag>
     <!-- for feature branches -->
