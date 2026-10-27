@@ -50,7 +50,7 @@
 
     <!-- TODO: remove this pin once https://github.com/paketo-buildpacks/builder-noble-java-tiny/issues/344 is fixed -->
     <!-- :latest is arm64-only since 0.0.200; with Spring Boot 4.2.x switch to the new default paketobuildpacks/ubuntu-resolute-builder -->
-    <spring-boot.build-image.builder>paketobuildpacks/builder-noble-java-tiny:0.0.201</spring-boot.build-image.builder>
+    <spring-boot.build-image.builder>paketobuildpacks/builder-noble-java-tiny:0.0.204</spring-boot.build-image.builder>
 
     <docker.image.tag>development</docker.image.tag>
     <!-- for feature branches -->
