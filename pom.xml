@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.1.2</version>
+    <version>4.2.0</version>
     <!-- to avoid conflicts between sortpom and release maven plugin, we add here the space before the closing slash -->
     <relativePath />
   </parent>
@@ -58,7 +58,7 @@
     <logstash-logback.version>9.0</logstash-logback.version>
 
     <spring-javaformat-maven-plugin.version>0.0.48</spring-javaformat-maven-plugin.version>
-    <spotless-maven-plugin.version>3.11.0</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>3.12.0</spotless-maven-plugin.version>
 
     <properties-maven-plugin.version>1.4.0</properties-maven-plugin.version>
     <exec-maven-plugin.version>3.7.0</exec-maven-plugin.version>
